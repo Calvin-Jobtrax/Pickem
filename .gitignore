@@ -24,3 +24,4 @@ Platforms/**/obj/
 # OS cruft
 .DS_Store
 Thumbs.db
+.vs/
