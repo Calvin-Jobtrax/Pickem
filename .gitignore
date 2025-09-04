@@ -1,0 +1,26 @@
+﻿# IDE
+.vs/
+.vscode/
+.idea/
+
+# Build outputs
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+
+# MAUI / Platforms
+**/bin/
+**/obj/
+Platforms/**/bin/
+Platforms/**/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS cruft
+.DS_Store
+Thumbs.db

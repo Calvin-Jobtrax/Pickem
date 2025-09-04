@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Pickem.Pages.ResultsPage" xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:models="clr-namespace:Pickem.Models" xmlns:conv="clr-namespace:Pickem.Converters" xmlns:behaviors="clr-namespace:Pickem.Behaviors" Title="Status">
+
+  <ContentPage.Behaviors>
+    <behaviors:UserChipBehavior />
+  </ContentPage.Behaviors>
+
+  <ContentPage.Resources>
+    <ResourceDictionary>
+      <conv:BoolToFontAttr x:Key="BoolToFontAttr" />
+      <Style TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+      </Style>
+
+      <!-- Shared header styles -->
+      <Style x:Key="HeaderRowGrid" TargetType="Grid">
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="HeightRequest" Value="30" />
+      </Style>
+      <Style x:Key="HeaderLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+      </Style>
+    </ResourceDictionary>
+  </ContentPage.Resources>
+
+  <!-- Rows:
+       0) Week controls
+       1) Player controls
+       2) Big dynamic header
+       3) Win/Loss legend
+       4) Purple column header (outside list)
+       5) List -->
+  <Grid Padding="12,0,12,0" RowSpacing="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+
+    <!-- Row 0: WEEK controls -->
+    <Grid Grid.Row="0" ColumnDefinitions="50,40,20,50,*,Auto,Auto" ColumnSpacing="8">
+      <Button Grid.Column="0" Text="◀" Clicked="OnPrevWeek" />
+      <Label Grid.Column="1" Text="Week" HorizontalTextAlignment="End" VerticalOptions="Center" />
+      <Label Grid.Column="2" x:Name="WeekLabel" Text="1" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalOptions="Center" />
+      <Button Grid.Column="3" Text="▶" Clicked="OnNextWeek" />
+      <Label Grid.Column="4" />
+      <ActivityIndicator Grid.Column="5" x:Name="Busy" IsRunning="False" IsVisible="False" />
+      <Button Grid.Column="6" Text="Reload" Clicked="OnReload" />
+    </Grid>
+
+    <!-- Row 1: PLAYER controls -->
+    <Grid Grid.Row="1" ColumnDefinitions="50,40,20,50,*" ColumnSpacing="8" Margin="0,6,0,0">
+      <Button Grid.Column="0" Text="◀" Clicked="OnPrevPlayer" />
+      <Label Grid.Column="1" Text="Player" HorizontalTextAlignment="End" VerticalOptions="Center" />
+      <Label Grid.Column="2" x:Name="PlayerLabel" Text="1" FontAttributes="Bold" VerticalOptions="Center" />
+      <Button Grid.Column="3" Text="▶" Clicked="OnNextPlayer" />
+    </Grid>
+
+    <!-- Row 2: Big dynamic header -->
+    <Label Grid.Row="2" x:Name="HeaderLabel" FontSize="20" FontAttributes="Bold" HorizontalTextAlignment="Center" Margin="0,8,0,4" />
+
+    <!-- Row 3: Win/Loss legend -->
+    <Grid Grid.Row="3" ColumnDefinitions="*,*" Style="{StaticResource HeaderRowGrid}" Margin="0,0,0,6">
+      <Label Grid.Column="0" Text="Win = Green" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#C8E6C9" />
+      <Label Grid.Column="1" Text="Loss = Red" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#FFCDD2" />
+    </Grid>
+
+    <!-- Row 4: Purple column header OUTSIDE the CollectionView -->
+    <Border Grid.Row="4" Stroke="Transparent" Background="Purple" StrokeShape="RoundRectangle 10" Margin="0,0,0,2">
+      <Grid Style="{StaticResource HeaderRowGrid}" ColumnDefinitions="*,40,60">
+        <Label Grid.Column="0" Text="Matchup" Style="{StaticResource HeaderLabel}" />
+        <Label Grid.Column="1" Text="Pick" Style="{StaticResource HeaderLabel}" />
+        <Label Grid.Column="2" Text="Points" Style="{StaticResource HeaderLabel}" />
+      </Grid>
+    </Border>
+
+    <!-- Row 5: Results list (NO Header inside) -->
+    <CollectionView Grid.Row="5" x:Name="RowsList" ItemsLayout="VerticalList" ItemSizingStrategy="MeasureAllItems" Margin="0">
+      <CollectionView.ItemTemplate>
+        <DataTemplate x:DataType="models:PlayerCardRow">
+          <Grid RowDefinitions="Auto,1" ColumnDefinitions="2*,0,0">
+            <!-- Content row -->
+            <Grid Grid.Row="0" ColumnDefinitions="2*,45,60" Padding="6,2">
+              <Grid.Triggers>
+                <DataTrigger TargetType="Grid" Binding="{Binding Won}" Value="True">
+                  <Setter Property="BackgroundColor" Value="#C8E6C9" />
+                </DataTrigger>
+                <DataTrigger TargetType="Grid" Binding="{Binding Won}" Value="False">
+                  <Setter Property="BackgroundColor" Value="#FFCDD2" />
+                </DataTrigger>
+                <DataTrigger TargetType="Grid" Binding="{Binding IsTotal}" Value="True">
+                  <Setter Property="BackgroundColor" Value="#B3E5FC" />
+                </DataTrigger>
+              </Grid.Triggers>
+
+              <Label Grid.Column="0" Text="{Binding Matchup}" HorizontalTextAlignment="Start" FontAttributes="{Binding IsTotal, Converter={StaticResource BoolToFontAttr}}" />
+
+              <Label Grid.Column="1" Text="{Binding Label}" HorizontalTextAlignment="Center" FontAttributes="{Binding IsTotal, Converter={StaticResource BoolToFontAttr}}" />
+
+              <Label Grid.Column="2" Text="{Binding Value}" HorizontalTextAlignment="Center" FontAttributes="{Binding IsTotal, Converter={StaticResource BoolToFontAttr}}" />
+            </Grid>
+
+            <!-- Separator -->
+            <BoxView Grid.Row="1" Grid.ColumnSpan="3" HeightRequest="1" BackgroundColor="Black" VerticalOptions="End" Opacity="0.25" />
+          </Grid>
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
+
+  </Grid>
+</ContentPage>

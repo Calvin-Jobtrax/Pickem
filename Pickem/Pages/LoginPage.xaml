@@ -1,0 +1,69 @@
+<ContentPage x:Class="Pickem.Pages.LoginPage" 
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             xmlns:vm="clr-namespace:Pickem.Models" 
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls" 
+             Title="Login" 
+             ios:NavigationPage.PrefersLargeTitles="False" Padding="0">
+
+  <ContentPage.BindingContext>
+    <vm:LoginViewModel />
+  </ContentPage.BindingContext>
+
+  <!-- Two-row layout: top row = logo hugging the top; second row = scrollable form -->
+  <Grid RowDefinitions="300,*" Padding="0">
+
+    <!-- LOGO (fills width, tight to the top) -->
+    <Image Grid.Row="0" Source="applogo.png" Aspect="AspectFit" VerticalOptions="Start" Margin="0,0,0,20"/>
+
+    <!-- FORM CONTENT -->
+    <ScrollView Grid.Row="1">
+      <Grid Padding="24,0,24,24" RowDefinitions="0,Auto,Auto,Auto,*,Auto">
+
+        <!-- Title -->
+        <Label Grid.Row="0" Text="Login" FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,8,0,12" />
+
+        <!-- Username + Password -->
+        <VerticalStackLayout Grid.Row="1" Spacing="8">
+          <Entry x:Name="UsernameEntry" 
+                 Placeholder="Username" 
+                 Text="{Binding Username}" 
+                 IsEnabled="{Binding IsNotLoggingIn}" 
+                 ReturnType="Next" Completed="Username_Completed" />
+          <Entry x:Name="PasswordEntry" 
+                 Placeholder="Password" 
+                 Text="{Binding Password}" 
+                 IsPassword="True" 
+                 IsEnabled="{Binding IsNotLoggingIn}" 
+                 ReturnType="Done" 
+                 ClearButtonVisibility="Never" 
+                 IsTextPredictionEnabled="False" 
+                 IsSpellCheckEnabled="False" />
+        </VerticalStackLayout>
+
+        <!-- Buttons + Activity -->
+        <VerticalStackLayout Grid.Row="2" Spacing="10" Margin="0,12,0,0">
+          <Button Text="{Binding LoginButtonText}" Command="{Binding LoginCommand}" IsEnabled="{Binding IsNotLoggingIn}" BackgroundColor="{DynamicResource Blue500}" TextColor="White" />
+
+          <Grid HeightRequest="2">
+            <ActivityIndicator IsRunning="{Binding IsLoggingIn}" IsVisible="{Binding IsLoggingIn}" VerticalOptions="Center" HorizontalOptions="Center" />
+          </Grid>
+
+          <Button Text="Exit" Command="{Binding ExitCommand}" BackgroundColor="Crimson" TextColor="White" />
+        </VerticalStackLayout>
+
+        <!-- Status -->
+        <Label Grid.Row="3" Text="{Binding StatusMessage}" TextColor="Red" LineBreakMode="WordWrap" Margin="0,8,0,0" />
+
+        <!-- Spacer -->
+        <Grid Grid.Row="4" />
+
+        <!-- Version Footer -->
+        <Grid Grid.Row="5">
+          <Label HorizontalOptions="End" VerticalOptions="End" FontSize="10" TextColor="{DynamicResource Gray500}" Text="{Binding VersionFooter}" FontFamily="monospace" />
+        </Grid>
+
+      </Grid>
+    </ScrollView>
+  </Grid>
+</ContentPage>

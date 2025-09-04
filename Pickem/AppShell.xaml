@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell x:Class="Pickem.AppShell" 
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+       xmlns:pages="clr-namespace:Pickem.Pages" 
+       Shell.FlyoutBehavior="Flyout">
+
+  <FlyoutItem Title="Wagers" Route="wager">
+    <ShellContent Title="Wager" ContentTemplate="{DataTemplate pages:WagerPage}" />
+  </FlyoutItem>
+  
+  <FlyoutItem Title="Schedule" Route="pool">
+    <ShellContent Title="Pool" ContentTemplate="{DataTemplate pages:PoolPage}" />
+  </FlyoutItem>
+
+  <FlyoutItem Title="Status" Route="results">
+    <ShellContent Title="Results" ContentTemplate="{DataTemplate pages:ResultsPage}" />
+  </FlyoutItem>
+
+  <FlyoutItem Title="Standings" Route="standing">
+    <ShellContent Title="Standings" ContentTemplate="{DataTemplate pages:StandingPage}" />
+  </FlyoutItem>
+
+  <FlyoutItem Title="Record" Route="record">
+    <ShellContent Title="Record" ContentTemplate="{DataTemplate pages:RecordPage}" />
+  </FlyoutItem>
+
+</Shell>

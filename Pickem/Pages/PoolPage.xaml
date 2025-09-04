@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Pickem.Pages.PoolPage" 
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             xmlns:models="clr-namespace:Pickem.Models" 
+             xmlns:conv="clr-namespace:Pickem.Converters" 
+             Title="Schedule" 
+             xmlns:behaviors="clr-namespace:Pickem.Behaviors">
+  
+  <ContentPage.Behaviors>
+    <behaviors:UserChipBehavior />
+  </ContentPage.Behaviors>
+
+  <ContentPage.Resources>
+    <conv:NameScoreConverter x:Key="NameScore" />
+    <conv:TieBreakTextConverter x:Key="TieText" />
+    <conv:RowBackgroundConverter x:Key="RowColor" />
+    <conv:DateShortConverter x:Key="DateShort" />
+    <conv:TimeShortConverter x:Key="TimeShort" />
+  </ContentPage.Resources>
+
+  <!-- Use a 2-row Grid so the list fills remaining space and scrolls fully -->
+  <Grid Padding="16,0" RowSpacing="0" RowDefinitions="Auto,*">
+
+    <!-- Row 0: Week controls + headings -->
+    <VerticalStackLayout Spacing="12" Grid.Row="0">
+
+      <!-- Week row with arrows (your spacing preserved) -->
+      <Grid ColumnDefinitions="50,Auto,Auto,50,*,Auto" RowDefinitions="Auto" ColumnSpacing="8">
+        <Button Grid.Column="0" Text="◀" Clicked="OnPrevWeek" />
+        <Label Grid.Column="1" Text="Week" VerticalOptions="Center" />
+        <Label x:Name="WeekLabel" Grid.Column="2" Text="1" FontAttributes="Bold" VerticalOptions="Center" />
+        <Button Grid.Column="3" Text="▶" Clicked="OnNextWeek" />
+        <Label Grid.Column="4" Text="" />
+        
+        <Grid Grid.Column="5" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+          <Button Grid.Column="1" Text="Reload" Clicked="OnReload" />
+          <ActivityIndicator Grid.Column="0" x:Name="Busy" IsRunning="False" IsVisible="False" />
+        </Grid>
+      </Grid>
+
+      <!-- Headings (Date removed; Time only since date is a group header) -->
+      <Border Grid.Row="0" Stroke="Transparent" Background="Purple" StrokeShape="RoundRectangle 10">
+        <Grid ColumnDefinitions="22,*,95,*" Padding="8,0" HeightRequest="30">
+        <Label Text="#" Margin="3" TextColor="White" FontAttributes="Bold" VerticalTextAlignment="Center" />
+        <Label Grid.Column="1" Text="Visitor Team" TextColor="White" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+        <Label Grid.Column="2" Text="Date/Time" TextColor="White" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+        <Label Grid.Column="3" Text="Home Team" TextColor="White" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+      </Grid>
+      </Border>
+
+    </VerticalStackLayout>
+
+    <!-- Row 1: List gets all remaining space and scrolls -->
+    <CollectionView x:Name="PoolList" Grid.Row="1" IsGrouped="True" ItemsLayout="VerticalList" VerticalOptions="FillAndExpand">
+
+      <!-- Date header (shown once per group) -->
+      <CollectionView.GroupHeaderTemplate>
+        <DataTemplate>
+          <Grid Padding="1" BackgroundColor="#EFEFEF">
+            <Label Text="{Binding DateHeader}" FontAttributes="Bold" FontSize="14" HorizontalOptions="Center" TextColor="Purple" Margin="30,0,0,0" />
+            <BoxView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" HeightRequest="1" BackgroundColor="Black" VerticalOptions="End" Opacity="0.25"/>
+          </Grid>
+        </DataTemplate>
+      </CollectionView.GroupHeaderTemplate>
+
+      <!-- Rows -->
+      <CollectionView.ItemTemplate>
+        <DataTemplate x:DataType="models:PoolItem">
+          <Grid Padding="0" RowDefinitions="Auto,Auto" ColumnDefinitions="32,*,Auto,*" BackgroundColor="{Binding ., Converter={StaticResource RowColor}}">
+
+            <!-- Game # -->
+            <Label Grid.Row="0" Grid.Column="0" Text="{Binding GameNumber}" FontAttributes="Bold" Margin="0,0,0,0" HorizontalTextAlignment="Center" VerticalTextAlignment="Center">
+              <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding Visitor}" Value="Tie Break">
+                  <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+              </Label.Triggers>
+            </Label>
+
+            <!-- Normal game -->
+            <Grid Grid.Row="0" x:Name="NormalRow" Grid.Column="1" Grid.ColumnSpan="3" ColumnDefinitions="*,Auto,*" IsVisible="True">
+              <Grid.Triggers>
+                <DataTrigger TargetType="Grid" Binding="{Binding Visitor}" Value="Tie Break">
+                  <Setter Property="IsVisible" Value="False" />
+                </DataTrigger>
+              </Grid.Triggers>
+
+              <!-- Visitor -->
+              <Label Grid.Row="0" Margin="10,0,5,0" Grid.Column="0" FontAttributes="Bold" TextColor="Black" VerticalTextAlignment="Center">
+                <Label.Text>
+                  <MultiBinding Converter="{StaticResource NameScore}">
+                    <Binding Path="Visitor" />
+                    <Binding Path="VisitorScore" />
+                  </MultiBinding>
+                </Label.Text>
+                <Label.Triggers>
+                  <DataTrigger TargetType="Label" Binding="{Binding VisitorWin}" Value="True">
+                    <Setter Property="TextColor" Value="Green" />
+                  </DataTrigger>
+                  <DataTrigger TargetType="Label" Binding="{Binding HomeWin}" Value="True">
+                    <Setter Property="TextColor" Value="Red" />
+                  </DataTrigger>
+                </Label.Triggers>
+              </Label>
+
+              <!-- Time only (centered + bold; your colors preserved) -->
+              <Label Grid.Row="0" Grid.Column="1" Text="{Binding Time, Converter={StaticResource TimeShort}}" FontSize="13" FontAttributes="Bold" TextColor="Blue" HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+
+              <!-- Home -->
+              <Label Grid.Row="0" Margin="5,0,10,0" Grid.Column="2" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="Black" VerticalTextAlignment="Center">
+                <Label.Text>
+                  <MultiBinding Converter="{StaticResource NameScore}">
+                    <Binding Path="Home" />
+                    <Binding Path="HomeScore" />
+                  </MultiBinding>
+                </Label.Text>
+                <Label.Triggers>
+                  <DataTrigger TargetType="Label" Binding="{Binding HomeWin}" Value="True">
+                    <Setter Property="TextColor" Value="Green" />
+                  </DataTrigger>
+                  <DataTrigger TargetType="Label" Binding="{Binding VisitorWin}" Value="True">
+                    <Setter Property="TextColor" Value="Red" />
+                  </DataTrigger>
+                </Label.Triggers>
+              </Label>
+            </Grid>
+
+            <!-- Tie break -->
+            <Label Grid.Row="0" x:Name="TieRow" Grid.Column="0" Grid.ColumnSpan="4" FontAttributes="Bold" TextColor="DarkBlue" HorizontalTextAlignment="Center" IsVisible="False">
+              <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding Visitor}" Value="Tie Break">
+                  <Setter Property="IsVisible" Value="True" />
+                </DataTrigger>
+              </Label.Triggers>
+              <Label.Text>
+                <MultiBinding Converter="{StaticResource TieText}">
+                  <Binding Path="VisitorScore" />
+                  <Binding Path="HomeScore" />
+                </MultiBinding>
+              </Label.Text>
+            </Label>
+
+            <!-- Bottom separator (fixed invalid color name) -->
+            <BoxView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" HeightRequest="1" BackgroundColor="Black" VerticalOptions="End" Opacity="0.25"/>
+
+          </Grid>
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
+
+  </Grid>
+</ContentPage>

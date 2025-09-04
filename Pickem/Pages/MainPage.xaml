@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Pickem.Pages.MainPage" 
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             Title="Main Menu" 
+             xmlns:behaviors="clr-namespace:Pickem.Behaviors">
+  
+  <ContentPage.Behaviors>
+    <behaviors:UserChipBehavior />
+  </ContentPage.Behaviors>
+
+  <ScrollView>
+    <VerticalStackLayout Padding="24,0" Spacing="12">
+
+      <!-- Welcome header using the saved login name -->
+      <Label FontSize="24" FontAttributes="Bold" HorizontalTextAlignment="Center">
+        <Label.FormattedText>
+          <FormattedString>
+            <Span Text="Welcome to Pick'em, " />
+            <Span Text="{Binding PlayerName}" FontAttributes="Bold" />
+          </FormattedString>
+        </Label.FormattedText>
+      </Label>
+
+      <Image Source="applogo.png" Aspect="AspectFit" HorizontalOptions="FillAndExpand" VerticalOptions="Start" Margin="80,0" />
+
+      <Button Text="Wagers" Clicked="OnWagers" />
+      <Button Text="Schedule" Clicked="OnPool" />
+      <Button Text="Status" Clicked="OnStatus" />
+      <Button Text="Standings" Clicked="OnStandings" />
+      <Button Text="Record" Clicked="OnRecord" />
+
+      <BoxView HeightRequest="1" BackgroundColor="#E5E7EB" />
+      <Button Text="Exit" BackgroundColor="Crimson" TextColor="White" Clicked="OnExit" />
+
+    </VerticalStackLayout>
+  </ScrollView>
+</ContentPage>

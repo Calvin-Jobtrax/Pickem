@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="Pickem.Pages.RecordPage" 
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             Title="Record" 
+             xmlns:behaviors="clr-namespace:Pickem.Behaviors">
+  
+  <ContentPage.Behaviors>
+    <behaviors:UserChipBehavior />
+  </ContentPage.Behaviors>
+
+  <!-- simple table-ish styles -->
+  <ContentPage.Resources>
+    <Style x:Key="HeaderCell" TargetType="Label">
+      <Setter Property="FontAttributes" Value="Bold" />
+      <Setter Property="Padding" Value="6,0" />
+      <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="Cell" TargetType="Label">
+      <Setter Property="Padding" Value="6,0" />
+      <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="NumCell" TargetType="Label" BasedOn="{StaticResource Cell}">
+      <Setter Property="HorizontalTextAlignment" Value="End" />
+    </Style>
+  </ContentPage.Resources>
+  
+  <ScrollView>
+    <VerticalStackLayout Padding="16,0" Spacing="0">
+
+      <!-- Headings (Date removed; Time only since date is a group header) -->
+      <Border Grid.Row="0" Stroke="Transparent" Background="Purple" StrokeShape="RoundRectangle 10">
+        <Grid ColumnSpacing="0" ColumnDefinitions="*,30,30,30,40,75,40" Padding="0" HeightRequest="30">
+          <Label Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="Player" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="1" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="🥇" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="2" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="🥈" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="3" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="🥉" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="4" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="#" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="5" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="Points" HorizontalTextAlignment="Center" />
+          <Label Grid.Column="6" Style="{StaticResource HeaderCell}" TextColor="White" FontSize="16" Text="✓" HorizontalTextAlignment="Center" />
+        </Grid>
+      </Border>
+
+      <!-- Rows -->
+      <CollectionView x:Name="PodiumList" ItemsLayout="VerticalList" SelectionMode="None">
+        <CollectionView.ItemTemplate>
+          <DataTemplate>
+            <!-- IMPORTANT: bind the background here -->
+            <Grid BackgroundColor="{Binding RowBackground}" ColumnSpacing="0" ColumnDefinitions="*,30,30,30,40,75,40" Padding="0" HeightRequest="25">
+              <Label Style="{StaticResource Cell}" FontSize="16" Text="{Binding PlayerName}" />
+              <Label Grid.Column="1" Style="{StaticResource NumCell}" Text="{Binding Firsts}" HorizontalTextAlignment="Center" />
+              <Label Grid.Column="2" Style="{StaticResource NumCell}" Text="{Binding Seconds}" HorizontalTextAlignment="Center" />
+              <Label Grid.Column="3" Style="{StaticResource NumCell}" Text="{Binding Thirds}" HorizontalTextAlignment="Center" />
+              <Label Grid.Column="4" Style="{StaticResource NumCell}" Text="{Binding WeeksPlayed}" HorizontalTextAlignment="Center" />
+              <Label Grid.Column="5" Style="{StaticResource NumCell}" Text="{Binding SeasonPoints}" HorizontalTextAlignment="Center" />
+              <Label Grid.Column="6" Style="{StaticResource NumCell}" Text="{Binding SeasonCorrect}" HorizontalTextAlignment="Center" />
+              <BoxView Grid.ColumnSpan="7" HeightRequest="1" BackgroundColor="#B0BEC5" VerticalOptions="End" />
+            </Grid>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+    </VerticalStackLayout>
+  </ScrollView>
+
+</ContentPage>
