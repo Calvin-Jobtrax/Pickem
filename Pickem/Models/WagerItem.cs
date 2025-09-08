@@ -7,7 +7,7 @@ namespace Pickem.Models;
 public sealed class WagerItem : WagerRow, INotifyPropertyChanged
 {
   public int RowIndex { get; set; }
-  public bool IsTieBreak => string.Equals(Visitor, "Tie Break", StringComparison.OrdinalIgnoreCase);
+  //public bool IsTieBreakRow => string.Equals(Visitor, "Tie Break", StringComparison.OrdinalIgnoreCase);
 
   // validation flags
   public bool IsDuplicate { get; set; }

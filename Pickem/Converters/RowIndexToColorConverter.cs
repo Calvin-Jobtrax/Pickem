@@ -6,7 +6,7 @@ namespace Pickem.Converters
 {
   public sealed class RowBackgroundConverter : IValueConverter
   {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
       // PoolPage rows
       if (value is PoolItem p)
@@ -27,7 +27,7 @@ namespace Pickem.Converters
       return Colors.Transparent;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
       => throw new NotImplementedException();
   }
 }

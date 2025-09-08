@@ -59,9 +59,11 @@
     <Label Grid.Row="2" x:Name="HeaderLabel" FontSize="20" FontAttributes="Bold" HorizontalTextAlignment="Center" Margin="0,8,0,4" />
 
     <!-- Row 3: Win/Loss legend -->
-    <Grid Grid.Row="3" ColumnDefinitions="*,*" Style="{StaticResource HeaderRowGrid}" Margin="0,0,0,6">
-      <Label Grid.Column="0" Text="Win = Green" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#C8E6C9" />
-      <Label Grid.Column="1" Text="Loss = Red" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#FFCDD2" />
+    <!-- Row 3: Win/Loss/Pending legend -->
+    <Grid Grid.Row="3" ColumnDefinitions="*,*,*" Style="{StaticResource HeaderRowGrid}" Margin="0,0,0,6">
+      <Label Grid.Column="0" Text="Win" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#C8E6C9" />
+      <Label Grid.Column="1" Text="Pending" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#E1BEE7" />
+      <Label Grid.Column="2" Text="Loss" FontAttributes="Bold" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" TextColor="Black" BackgroundColor="#FFCDD2" />
     </Grid>
 
     <!-- Row 4: Purple column header OUTSIDE the CollectionView -->
@@ -74,6 +76,7 @@
     </Border>
 
     <!-- Row 5: Results list (NO Header inside) -->
+    <!-- Row 5: Results list (NO Header inside) -->
     <CollectionView Grid.Row="5" x:Name="RowsList" ItemsLayout="VerticalList" ItemSizingStrategy="MeasureAllItems" Margin="0">
       <CollectionView.ItemTemplate>
         <DataTemplate x:DataType="models:PlayerCardRow">
@@ -83,12 +86,19 @@
               <Grid.Triggers>
                 <DataTrigger TargetType="Grid" Binding="{Binding Won}" Value="True">
                   <Setter Property="BackgroundColor" Value="#C8E6C9" />
+                  <!-- Green -->
                 </DataTrigger>
                 <DataTrigger TargetType="Grid" Binding="{Binding Won}" Value="False">
                   <Setter Property="BackgroundColor" Value="#FFCDD2" />
+                  <!-- Red -->
+                </DataTrigger>
+                <DataTrigger TargetType="Grid" Binding="{Binding IsPending}" Value="True">
+                  <Setter Property="BackgroundColor" Value="#E1BEE7" />
+                  <!-- Purple -->
                 </DataTrigger>
                 <DataTrigger TargetType="Grid" Binding="{Binding IsTotal}" Value="True">
                   <Setter Property="BackgroundColor" Value="#B3E5FC" />
+                  <!-- Blue for totals -->
                 </DataTrigger>
               </Grid.Triggers>
 

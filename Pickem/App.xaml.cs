@@ -35,7 +35,10 @@ public partial class App : Application
             var msg = $"Could not reach:\n{url}\n\n";
             if (status > 0) msg += $"HTTP {status}\n";
             if (!string.IsNullOrWhiteSpace(error)) msg += $"{error}\n";
-            await MainPage.DisplayAlert("Connection problem", msg, "OK");
+            if (MainPage != null)
+            {
+                await MainPage.DisplayAlert("Connection problem", msg, "OK");
+            }
         }
     }
 }
