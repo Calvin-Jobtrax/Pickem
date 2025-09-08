@@ -1,162 +1,84 @@
 ﻿// AppConfig.cs
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
-namespace Pickem;
-
-public sealed class AppConfig
+namespace Pickem
 {
-    public static AppConfig Shared { get; } = new();
-
-    public const int SeasonYear = 2025;
-
-    // ---- Ports
-    //    public const int HttpPort = 5064;
-    public const int HttpPort = 52227;
-    public const int HttpsPort = 7037;
-
-    // ---- Known locations (edit these to your actuals)
-    private const string OfficeIp = "192.168.10.201";
-    private const string HomeIp = "192.168.0.198";
-
-    // Optional local hostname you may set up on each router/DNS
-    private const string LocalHostName = "pickem.lan";
-
-    // ---- Prefs / Env
-    private const string PrefKey = "Pickem.BaseRoot";
-    private const string EnvVar = "PICKEM_BASEROOT";
-
-    private string _baseRoot;
-
-    private AppConfig()
+    public sealed class AppConfig
     {
-        // 1) Env override beats everything
-        var env = Environment.GetEnvironmentVariable(EnvVar);
+        public static AppConfig Shared { get; } = new();
 
-        // 2) Then last saved
-        var saved = Preferences.Default.Get(PrefKey, "");
+        public const int SeasonYear = 2025;
 
-        // 3) Else platform default
-        var def = GetPlatformDefault();
+        // Deployed default (ensure trailing slash)
+        public const string DefaultBaseRoot = "https://jobtraxweb.com/api/";
 
-        _baseRoot = EnsureSlash(!string.IsNullOrWhiteSpace(env) ? env :
-                                !string.IsNullOrWhiteSpace(saved) ? saved : def);
-    }
+        // ---- Prefs / Env
+        private const string PrefKey = "Pickem.BaseRoot";
+        private const string EnvVar = "PICKEM_BASEROOT";
 
-    /// <summary>Current base root; persisted when set.</summary>
-    public string BaseRoot
-    {
-        get => _baseRoot;
-        set
+        private string _baseRoot;
+
+        private AppConfig()
         {
-            _baseRoot = EnsureSlash(value);
+            // 1) Env override
+            var env = Environment.GetEnvironmentVariable(EnvVar);
+
+            // 2) Last saved
+            var saved = Preferences.Default.Get(PrefKey, "");
+
+            // 3) Default (production)
+            var def = DefaultBaseRoot;
+
+            _baseRoot = EnsureSlash(!string.IsNullOrWhiteSpace(env) ? env :
+                                    !string.IsNullOrWhiteSpace(saved) ? saved : def);
+        }
+
+        /// <summary>
+        /// Current base root; persisted when set via SetBaseRoot(...).
+        /// </summary>
+        public string BaseRoot => _baseRoot;
+
+        /// <summary>
+        /// Explicitly change and persist the base root (e.g., for debugging).
+        /// </summary>
+        public void SetBaseRoot(string newRoot)
+        {
+            _baseRoot = EnsureSlash(newRoot);
             Preferences.Default.Set(PrefKey, _baseRoot);
         }
-    }
 
-    // Strongly-typed API roots
-    public Uri UserBase => new(new Uri(BaseRoot), "api/user/");
-    public Uri PickemBase => new(new Uri(BaseRoot), "api/pickem/");
-    public string UserBaseUrl => UserBase.ToString();
-    public string PickemBaseUrl => PickemBase.ToString();
+        // ---- Strongly-typed API roots
+        // IMPORTANT: BaseRoot already ends with ".../api/", so don't prepend "api/" again.
+        public Uri UserBase => new(new Uri(BaseRoot), "user/");
+        public Uri PickemBase => new(new Uri(BaseRoot), "pickem/");
 
-    public bool IsPublicServer { get; set; } = true;
+        public string UserBaseUrl => UserBase.ToString();
+        public string PickemBaseUrl => PickemBase.ToString();
 
-    // ---- Defaults per platform
-
-    private static string GetPlatformDefault()
-    {
-#if ANDROID
-        // Android emulator loopback; real devices will be corrected by AutoSelect()
-        return $"http://10.0.2.2:{HttpPort}/";
-#elif IOS
-    // Real iPhone needs a LAN IP, not localhost
-    // Use Office by default; AutoSelect() will switch to Home if that's where you are
-    return $"http://{OfficeIp}:{HttpPort}/";
-#else
-    return $"https://localhost:{HttpsPort}/";
-#endif
-    }
-
-#if ANDROID
-    private static bool IsAndroidEmulator()
-    {
-        try
-        {
-            var fp = Android.OS.Build.Fingerprint ?? "";
-            var prod = Android.OS.Build.Product ?? "";
-            var mod = Android.OS.Build.Model ?? "";
-            return fp.Contains("generic", StringComparison.OrdinalIgnoreCase)
-                || fp.Contains("emulator", StringComparison.OrdinalIgnoreCase)
-                || prod.Contains("sdk", StringComparison.OrdinalIgnoreCase)
-                || prod.Contains("emulator", StringComparison.OrdinalIgnoreCase)
-                || mod.Contains("Emulator", StringComparison.OrdinalIgnoreCase);
-        }
-        catch { return false; }
-    }
-#endif
-
-    // ---- Auto-probe: call once on app start (non-blocking is fine)
-    public async Task AutoSelectAsync(CancellationToken ct = default)
-    {
-        using var http = new HttpClient { Timeout = TimeSpan.FromMilliseconds(800) };
-
-        foreach (var url in BuildCandidates())
+        /// <summary>
+        /// Optional quick health probe against the current BaseRoot.
+        /// </summary>
+        public async Task<bool> ProbeAsync(CancellationToken ct = default)
         {
             try
             {
-                if (await ProbeAsync(http, url, "health", ct)    // your /health if present
-                 || await ProbeAsync(http, url, "index.html", ct)
-                 || await ProbeAsync(http, url, "", ct))
-                {
-                    BaseRoot = url; // persists
-                    return;
-                }
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+                // Try /health first (if you have it); otherwise "/" is fine.
+                var uri = new Uri(new Uri(BaseRoot), "health");
+                using var resp = await http.GetAsync(uri, ct);
+                return (int)resp.StatusCode < 500;
             }
-            catch { /* try next */ }
+            catch
+            {
+                return false;
+            }
         }
-        // keep current BaseRoot
+
+        private static string EnsureSlash(string u) =>
+          string.IsNullOrWhiteSpace(u) ? u : (u.EndsWith("/") ? u : u + "/");
     }
-
-    private static async Task<bool> ProbeAsync(HttpClient http, string baseUrl, string path, CancellationToken ct)
-    {
-        var uri = new Uri(new Uri(baseUrl), path);
-        using var resp = await http.GetAsync(uri, ct);
-        return (int)resp.StatusCode < 500; // reachable (2xx/3xx/4xx)
-    }
-
-    private IEnumerable<string> BuildCandidates()
-    {
-        // 0) Whatever is currently set (env/prefs/default)
-        yield return BaseRoot;
-
-#if ANDROID
-        // 1) Emulator (common at home & work)
-        yield return $"http://10.0.2.2:{HttpPort}/";
-        yield return $"https://10.0.2.2:{HttpsPort}/";
-#endif
-
-        // 2) Office/Home by IP - HTTP first to prove routing (no cert hassles)
-        yield return $"http://{OfficeIp}:{HttpPort}/";
-        yield return $"http://{HomeIp}:{HttpPort}/";
-
-        // 3) Optional local hostname if you map it on each router/DNS
-        yield return $"http://{LocalHostName}:{HttpPort}/";
-
-        // 4) Same but HTTPS (when your device trusts certs)
-        yield return $"https://{OfficeIp}:{HttpsPort}/";
-        yield return $"https://{HomeIp}:{HttpsPort}/";
-        yield return $"https://{LocalHostName}:{HttpsPort}/";
-
-        // 5) Desktop/simulator fallbacks
-        yield return $"http://localhost:{HttpPort}/";
-        yield return $"https://localhost:{HttpsPort}/";
-    }
-
-    // Quick helpers for a settings screen (optional)
-    public void UseOfficeHttp() => BaseRoot = $"http://{OfficeIp}:{HttpPort}/";
-    public void UseHomeHttp() => BaseRoot = $"http://{HomeIp}:{HttpPort}/";
-    public void UseOfficeHttps() => BaseRoot = $"https://{OfficeIp}:{HttpsPort}/";
-    public void UseHomeHttps() => BaseRoot = $"https://{HomeIp}:{HttpsPort}/";
-
-    private static string EnsureSlash(string u) =>
-        string.IsNullOrWhiteSpace(u) ? u : (u.EndsWith("/") ? u : u + "/");
 }

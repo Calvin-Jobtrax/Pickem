@@ -92,7 +92,7 @@ public sealed class LoginViewModel : INotifyPropertyChanged
     {
         StatusMessage = string.Empty;
 
-        if (!AppConfig.Shared.IsPublicServer && !NetworkMonitor.Shared.IsOnWiFi)
+        if (!NetworkMonitor.Shared.IsOnWiFi)
         {
             StatusMessage = "Local server requires Wi-Fi.";
             await Application.Current!.MainPage!.DisplayAlert(

@@ -1,66 +1,80 @@
 ﻿using System.Net.Http.Headers;
+using Microsoft.Maui.Storage;            // for Preferences
 using Pickem.Services;
 
 #if IOS
 using UIKit;
 #endif
 
-namespace Pickem; // file-scoped
+namespace Pickem;
 
 public static class MauiProgram
 {
-  public static MauiApp CreateMauiApp()
-  {
-    var builder = MauiApp.CreateBuilder();
-    builder.UseMauiApp<App>()
-           .ConfigureFonts(f => f.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"));
-
-    // Register the named HttpClient
-    var httpClientBuilder = builder.Services.AddHttpClient("Api", c =>
+    public static MauiApp CreateMauiApp()
     {
-      c.BaseAddress = new Uri(AppConfig.Shared.BaseRoot); // e.g. https://10.0.2.2:7037/
-      c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    });
+        var builder = MauiApp.CreateBuilder();
+        builder.UseMauiApp<App>()
+               .ConfigureFonts(f => f.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"));
 
-    // Accept dev cert on Android DEBUG only
+        // ---- FORCE PROD BASE ROOT *BEFORE* AddHttpClient ----
+#if DEBUG
+        // remove any old saved base root or env override that may point to 10.0.2.2
+        Preferences.Default.Remove("Pickem.BaseRoot");
+        Environment.SetEnvironmentVariable("PICKEM_BASEROOT", null);
+#endif
+        // either hardcode OR set via AppConfig
+        // (A) Hardcode here (bullet-proof):
+        var baseRoot = new Uri("https://jobtraxweb.com/api/");
+        // (B) Or, if you want to keep AppConfig:
+        // AppConfig.Shared.SetBaseRoot("https://jobtraxweb.com/api/");
+        // var baseRoot = new Uri(AppConfig.Shared.BaseRoot);
+
+        // ---- HttpClient pipeline (single registration) ----
+        builder.Services.AddTransient<HttpLoggingHandler>();
+
+        var apiClient = builder.Services.AddHttpClient("Api", c =>
+        {
+            c.BaseAddress = baseRoot; // now guaranteed to be prod
+            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            c.Timeout = TimeSpan.FromSeconds(30);
+        });
+        apiClient.AddHttpMessageHandler<HttpLoggingHandler>();
+
 #if ANDROID && DEBUG
-    httpClientBuilder.ConfigurePrimaryHttpMessageHandler(() =>
-      new HttpClientHandler
-      {
-        ServerCertificateCustomValidationCallback =
-            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-      });
+        apiClient.ConfigurePrimaryHttpMessageHandler(() =>
+          new HttpClientHandler
+          {
+              ServerCertificateCustomValidationCallback =
+              HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+          });
 #endif
 
 #if IOS
-    // Standard (short) title — applies on pages with a TitleView (e.g., your username chip)
-    // Bigger/bolder standard nav-bar title (the short bar used when TitleView is present)
-    UIKit.UINavigationBar.Appearance.SetTitleTextAttributes(
-        new UIKit.UITextAttributes { Font = UIKit.UIFont.BoldSystemFontOfSize(18) }
-    );
-
-    // Back button text
+    UINavigationBar.Appearance.SetTitleTextAttributes(
+      new UITextAttributes { Font = UIFont.BoldSystemFontOfSize(18) });
     var backAttrs = new UIStringAttributes { Font = UIFont.BoldSystemFontOfSize(17) };
     UIBarButtonItem.Appearance.SetTitleTextAttributes(backAttrs, UIControlState.Normal);
     UIBarButtonItem.Appearance.SetTitleTextAttributes(backAttrs, UIControlState.Highlighted);
     UIBarButtonItem.Appearance.SetTitleTextAttributes(backAttrs, UIControlState.Disabled);
 #endif
 
-    builder.Services.AddSingleton<ApiService>();
-    builder.Services.AddSingleton<SessionState>();
-    builder.Services.AddSingleton<NetworkMonitor>();
-    builder.Services.AddSingleton<AppShell>();
-    builder.Services.AddSingleton<SessionService>();
+        // Services & Pages
+        builder.Services.AddSingleton<ApiService>();
+        builder.Services.AddSingleton<SessionService>();
+        builder.Services.AddSingleton<SessionState>();
+        builder.Services.AddSingleton<NetworkMonitor>();
+        builder.Services.AddSingleton<AppShell>();
 
-    builder.Services.AddTransient<Pages.LoginPage>();
-    builder.Services.AddTransient<Pages.MainPage>();
-    builder.Services.AddTransient<Pages.PoolPage>();
-    builder.Services.AddTransient<Pages.RecordPage>();
-    builder.Services.AddTransient<Pages.ResultsPage>();
-    builder.Services.AddTransient<Pages.StandingPage>();
-    builder.Services.AddTransient<Pages.WagerPage>();
-    builder.Services.AddTransient<Pages.RecordPage>();
+        builder.Services.AddTransient<Pages.LoginPage>();
+        builder.Services.AddTransient<Pages.MainPage>();
+        builder.Services.AddTransient<Pages.PoolPage>();
+        builder.Services.AddTransient<Pages.RecordPage>();
+        builder.Services.AddTransient<Pages.ResultsPage>();
+        builder.Services.AddTransient<Pages.StandingPage>();
+        builder.Services.AddTransient<Pages.WagerPage>();
 
-    return builder.Build();
-  }
+        var app = builder.Build();
+
+        return app;
+    }
 }

@@ -1,42 +1,21 @@
-﻿using System;
-using System.Globalization;
-using Microsoft.Maui.Controls;
+﻿using System.Globalization;
 
 namespace Pickem.Converters
 {
-  public sealed class ZeroToEmptyConverter : IValueConverter
-  {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public sealed class ZeroToEmptyConverter : IValueConverter
     {
-      if (value == null) return string.Empty;
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is int i) return i == 0 ? string.Empty : i.ToString(culture);
+            return value?.ToString() ?? string.Empty;
+        }
 
-      // Handle int
-      if (value.GetType() == typeof(int))
-      {
-        var i = (int)value;
-        return i == 0 ? string.Empty : i.ToString(culture);
-      }
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var s = (value as string)?.Trim();
+            if (string.IsNullOrEmpty(s)) return 0;
 
-      // Handle int? (Nullable<int>)
-      if (value.GetType() == typeof(int?))
-      {
-        var ni = (int?)value;
-        if (!ni.HasValue || ni.Value == 0) return string.Empty;
-        return ni.Value.ToString(culture);
-      }
-
-      // Pass strings through
-      if (value is string s) return s;
-
-      return string.Empty;
+            return int.TryParse(s, NumberStyles.Integer, culture, out var n) ? n : 0;
+        }
     }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-      var s = (value as string)?.Trim();
-      if (string.IsNullOrEmpty(s)) return 0; // return null instead if your target is int?
-      int n;
-      return int.TryParse(s, NumberStyles.Integer, culture, out n) ? n : 0;
-    }
-  }
 }

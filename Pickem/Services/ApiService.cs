@@ -4,18 +4,6 @@ using Pickem.Models;
 
 namespace Pickem.Services;
 
-public sealed class AppConfig
-{
-    public static AppConfig Shared { get; } = new();
-
-    // Example: set from appsettings, Secrets, or compile-time constants
-    // e.g., "https://jobtraxweb.com:52227/api/user"
-    public string UserBaseUrl { get; set; } = "https://localhost:7037/api/user";
-
-    // If false, we force Wi-Fi (mirrors your Swift check)
-    public bool IsPublicServer { get; set; } = true;
-}
-
 public sealed class ApiService
 {
     private readonly HttpClient _http;
@@ -24,6 +12,37 @@ public sealed class ApiService
     public ApiService(IHttpClientFactory factory)
     {
         _http = factory.CreateClient("Api");
+    }
+
+    public async Task<(bool ok, string url, int status, string? error)> ProbeAsync(CancellationToken ct = default)
+    {
+        // Try a few lightweight endpoints; keep only the one your API exposes
+        var candidates = new[] { "health", "user/ping", "" };
+
+        foreach (var path in candidates)
+        {
+            var url = path;
+            try
+            {
+                using var resp = await _http.GetAsync(url, ct);
+                var code = (int)resp.StatusCode;
+                if (code < 500) // consider 2xx/3xx/4xx as “reachable”
+                    return (true, new Uri(_http.BaseAddress!, url).ToString(), code, null);
+
+                // 5xx means server reachable but error; still useful to surface
+                var text = await resp.Content.ReadAsStringAsync(ct);
+                return (false, new Uri(_http.BaseAddress!, url).ToString(), code, text);
+            }
+            catch (Exception ex)
+            {
+                // try next candidate
+                System.Diagnostics.Debug.WriteLine($"[Probe] {url} failed: {ex.Message}");
+                if (path == candidates[^1]) // last one
+                    return (false, new Uri(_http.BaseAddress!, url).ToString(), 0, ex.Message);
+            }
+        }
+
+        return (false, new Uri(_http.BaseAddress!, ".").ToString(), 0, "Unknown");
     }
 
     // ---------- Low-level helpers ----------
@@ -56,51 +75,45 @@ public sealed class ApiService
         if (!resp.IsSuccessStatusCode)
             throw new HttpRequestException($"PUT {path} failed {(int)resp.StatusCode}: {text}");
     }
-
     // ---------- API wrappers ----------
 
-    /// <summary>
-    /// Returns weekly standings for a given NFL year/week.
-    /// Tries /pickem/standings/{year}/{week}, falls back to /pickem/standings?year=&week=
-    /// </summary>
-    // GET /pickem/standings?year=YYYY&week=W
     public async Task<List<StandingRow>> GetStandingsAsync(int year, int week)
     {
         var list = await GetJsonSafeAsync<List<StandingRow>>(
-            $"/api/pickem/standings?year={year}&week={week}");
+            $"pickem/standings?year={year}&week={week}");
         return list ?? new List<StandingRow>();
     }
 
-
-    /// <summary>
-    /// Optional: season-to-date standings (no week).
-    /// </summary>
     public async Task<List<StandingRow>> GetStandingsAsync(int year)
     {
-        var list = await GetJsonSafeAsync<List<StandingRow>>($"/api/pickem/standings/{year}");
+        var list = await GetJsonSafeAsync<List<StandingRow>>(
+            $"pickem/standings/{year}");
         return list ?? new List<StandingRow>();
     }
 
     public async Task<int> GetMaxWeekAsync(int year)
     {
-        // endpoint returns: { "year": 2025, "maxWeek": 18 }
-        var obj = await GetJsonSafeAsync<MaxWeekResponse>($"/api/pickem/maxweek/{year}");
-        return obj?.MaxWeek ?? 0;  // obj can be null; MaxWeek is non-nullable int
+        var obj = await GetJsonSafeAsync<MaxWeekResponse>(
+            $"pickem/maxweek/{year}");
+        return obj?.MaxWeek ?? 0;
     }
 
     public async Task<List<PodiumRow>> GetPodiumAsync(int year, int maxWeek)
     {
-        var url = $"/api/pickem/podium?year={year}&maxWeek={maxWeek}";
+        var url = $"pickem/podium?year={year}&maxWeek={maxWeek}";
         var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var rows = await _http.GetFromJsonAsync<List<PodiumRow>>(url, opts);
         return rows ?? new();
     }
 
-    public Task<List<PoolRow>?> GetPoolAsync(int year, int week)
-        => GetJsonSafeAsync<List<PoolRow>>($"/api/pickem/pool?year={year}&week={week}");
+    public Task<List<PoolRow>?> GetPoolAsync(int year, int week) =>
+        GetJsonSafeAsync<List<PoolRow>>($"pickem/pool?year={year}&week={week}");
 
-    public Task<List<WagerRow>?> GetWagersAsync(int year, int week, int playerId)
-        => GetJsonSafeAsync<List<WagerRow>>($"/api/pickem/wagers/{year}/{week}/{playerId}");
+    public Task<List<WagerRow>?> GetWagersAsync(int year, int week, int playerId) =>
+        GetJsonSafeAsync<List<WagerRow>>($"pickem/wagers/{year}/{week}/{playerId}");
+
+    public Task<PlayerCardDto?> GetPlayerCardAsync(int year, int week, int playerId) =>
+        _http.GetFromJsonAsync<PlayerCardDto>($"pickem/playercard/{year}/{week}/{playerId}");
 
     public Task<bool> SaveGameAsync(WagerRow row) =>
         UpdateGameAsync(row.Record, row.Wager, row.VisitorWin, row.HomeWin);
@@ -108,15 +121,13 @@ public sealed class ApiService
     public async Task<bool> UpdateGameAsync(int record, int wager, bool? visitorWin, bool? homeWin)
     {
         var dto = new UpdateGameDto(record, wager, visitorWin, homeWin);
-        var res = await _http.PutAsJsonAsync($"/api/pickem/{record}", dto);
+        var res = await _http.PutAsJsonAsync($"pickem/{record}", dto);
         return res.IsSuccessStatusCode;
     }
 
-    // Optional text endpoint (e.g., /home)
+    // Optional plain-text endpoint (still no leading slash)
     public Task<string> GetTextAsync(string path) => _http.GetStringAsync(path);
 
-    public Task<PlayerCardDto?> GetPlayerCardAsync(int year, int week, int playerId)
-        => _http.GetFromJsonAsync<PlayerCardDto>($"/api/pickem/playercard/{year}/{week}/{playerId}");
 }
 
 // ---------- DTOs used only by the client ----------
