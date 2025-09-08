@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Pickem.Models;
 using Pickem.Services;
 
@@ -8,7 +9,7 @@ public partial class WagerPage : ContentPage
 {
   private readonly ApiService _api;
   private readonly int _playerId; // TODO: set from login/session
-  private int _year = 2024; // DateTime.Now.Year;
+  private int _year = AppConfig.SeasonYear; // DateTime.Now.Year;
   private int _week = 1;
   private int _maxWeek = 18;
 
@@ -221,41 +222,53 @@ public partial class WagerPage : ContentPage
     await DisplayAlert("Canceled", "Changes have been reverted.", "OK");
   }
 
-  private async void OnSaveAll(object sender, EventArgs e)
-  {
-    ValidateAndShowBanner();
-
-    try
+    private async void OnSaveAll(object sender, EventArgs e)
     {
-      Busy.IsVisible = Busy.IsRunning = true;
+        ValidateAndShowBanner();
 
-      var tasks = _items.Select(r =>
-          _api.UpdateGameAsync(r.Record, r.Wager, r.VisitorWin, r.HomeWin));
+        Busy.IsVisible = Busy.IsRunning = true;
 
-      await Task.WhenAll(tasks);
+        try
+        {
+            foreach (var r in _items)
+            {
+                try
+                {
+                    // fire update and ignore errors
+                    await _api.UpdateGameAsync(r.Record, r.Wager, r.VisitorWin, r.HomeWin);
+                }
+                catch
+                {
+                    // swallow any exception, keep going
+                }
 
-      foreach (var it in _items) it.MarkClean();
-      UpdateButtonsEnabled();
+                r.MarkClean();
+            }
 
-      if (WarnLabel.IsVisible)
-        await DisplayAlert("Saved (with warnings)", "Saved, but review the notes above.", "OK");
-      else
-        await DisplayAlert("Saved", "All wagers saved.", "OK");
+            UpdateButtonsEnabled();
 
-      ValidateAndShowBanner();
+            ValidateAndShowBanner();
+
+            // optional: force collection view/grid refresh
+            WagerList.ItemsSource = null;
+            WagerList.ItemsSource = _items;
+
+            if (WarnLabel.IsVisible)
+                await DisplayAlert("Saved (with warnings)", "Saved, but review the notes above.", "OK");
+            else
+                await DisplayAlert("Saved", "All wagers saved.", "OK");
+
+
+        }
+        finally
+        {
+            Busy.IsVisible = Busy.IsRunning = false;
+        }
     }
-    catch (Exception ex)
-    {
-      await DisplayAlert("Save Failed", ex.Message, "OK");
-    }
-    finally
-    {
-      Busy.IsVisible = Busy.IsRunning = false;
-    }
-  }
 
-  // NEW: Button handlers (mirroring PoolPage)
-  private async void OnPrevWeek(object sender, EventArgs e)
+
+    // NEW: Button handlers (mirroring PoolPage)
+    private async void OnPrevWeek(object sender, EventArgs e)
   {
     if (_week > 1)
     {

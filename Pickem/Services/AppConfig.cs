@@ -1,16 +1,12 @@
 ﻿// AppConfig.cs
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Maui.Storage;
 
 namespace Pickem;
 
 public sealed class AppConfig
 {
     public static AppConfig Shared { get; } = new();
+
+    public const int SeasonYear = 2025;
 
     // ---- Ports
     //    public const int HttpPort = 5064;

@@ -1,74 +1,73 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+    <!-- .NET 8 across platforms -->
+    <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">
       $(TargetFrameworks);net8.0-windows10.0.19041.0
     </TargetFrameworks>
 
     <OutputType>Exe</OutputType>
-    <RootNamespace>Pickem</RootNamespace>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <!-- Identity & version -->
     <ApplicationTitle>Pickem</ApplicationTitle>
     <ApplicationId>com.companyname.pickem</ApplicationId>
     <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
-    <!-- Minimum supported OS versions -->
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+    <!-- Platform minimums -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">12.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-  </PropertyGroup>
 
-  <!-- ===== Stable defaults per platform ===== -->
-  <PropertyGroup>
-    <!-- We use MAUI workloads, not NuGet packages -->
+    <!-- Keep MAUI packages flexible across toolchain versions -->
     <SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
+    <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
 
-  <!-- ANDROID: Default to real device (arm64). VS will override if you pick an emulator. -->
+  <!-- Debug defaults -->
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <PublishTrimmed>true</PublishTrimmed>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <UseInterpreter>true</UseInterpreter>
+  </PropertyGroup>
+
+  <!-- ANDROID -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
-    <!-- Allow both ABIs in the package so switching devices/emulators "just works" -->
-    <AndroidSupportedAbis>arm64-v8a;x86_64</AndroidSupportedAbis>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
-  <!-- IOS: Do NOT hardcode multiple RIDs; VS picks one based on the selected target.
-           Leave RID empty so solution builds don't try to do device+sim at once. -->
+  <!-- iOS (Visual Studio will supply the RuntimeIdentifier based on your selected target) -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
-    <!-- Intentionally empty: VS will pass ios-arm64 or iossimulator-*- automatically. -->
+    <!-- Needed so size-optimization/linker steps are allowed during publish -->
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Good default for Release; overridden in Debug below -->
+    <MtouchLink>SdkOnly</MtouchLink>
   </PropertyGroup>
 
-  <!-- MAC CATALYST: allow both archs -->
+  <!-- iOS Debug: faster builds; disable linker -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)'=='Debug'">
+    <MtouchLink>None</MtouchLink>
+  </PropertyGroup>
+
+  <!-- MAC CATALYST -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
     <MaccatalystSupportedArchitectures>Arm64;x64</MaccatalystSupportedArchitectures>
-    <!-- Optional default RID (VS can override) -->
     <RuntimeIdentifier>maccatalyst-x64</RuntimeIdentifier>
   </PropertyGroup>
 
-  <!-- WINDOWS: avoid AnyCPU apphost error by pinning x64 -->
+  <!-- WINDOWS -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
   </PropertyGroup>
-
-  <!-- iOS signing (keep or switch to Automatic) -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net8.0-ios'">
-    <CodesignKey>Apple Development: Created via API (A24JBGG3U6)</CodesignKey>
-    <CodesignProvision>VS: WildCard Development</CodesignProvision>
-    <!-- Or:
-    <CodesignKey>Apple Development</CodesignKey>
-    <CodesignProvision>Automatic</CodesignProvision>
-    -->
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
     <CodesignKey>Apple Development: Created via API (A24JBGG3U6)</CodesignKey>
     <CodesignProvision>VS: WildCard Development</CodesignProvision>
   </PropertyGroup>
@@ -77,68 +76,16 @@
   <ItemGroup>
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-    <MauiImage Include="Resources\Images\*" />
-    <MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
-    <MauiFont Include="Resources\Fonts\*" />
-    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiImage Include="Resources\Images\**\*.*" />
+    <MauiFont Include="Resources\Fonts\**\*.*" />
+    <MauiAsset Include="Resources\Raw\**\*.*" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Non-MAUI packages (MAUI itself comes from workloads) -->
+  <!-- Non-MAUI packages only -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
   </ItemGroup>
-
-  <!-- C# code-behind linkage -->
-  <ItemGroup>
-    <Compile Update="Pages\LoginPage.xaml.cs">
-      <DependentUpon>LoginPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\MainPage.xaml.cs">
-      <DependentUpon>MainPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\StandingPage.xaml.cs">
-      <DependentUpon>StandingPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\PoolPage.xaml.cs">
-      <DependentUpon>PoolPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\RecordPage.xaml.cs">
-      <DependentUpon>RecordPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\ResultsPage.xaml.cs">
-      <DependentUpon>ResultsPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Pages\WagerPage.xaml.cs">
-      <DependentUpon>WagerPage.xaml</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <!-- XAML markup linkage -->
-  <ItemGroup>
-    <MauiXaml Update="Pages\LoginPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\MainPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\StandingPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\PoolPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\RecordPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\ResultsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\WagerPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-  </ItemGroup>
-
 
 </Project>

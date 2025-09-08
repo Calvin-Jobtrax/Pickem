@@ -20,7 +20,7 @@ public partial class RecordPage : ContentPage
 
     try
     {
-      const int year = 2024;
+      const int year = AppConfig.SeasonYear;
       var maxWeek = await _api.GetMaxWeekAsync(year);
       var rows = await _api.GetPodiumAsync(year, maxWeek) ?? new List<PodiumRow>();
 

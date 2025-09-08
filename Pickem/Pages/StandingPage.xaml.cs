@@ -13,7 +13,7 @@ public partial class StandingPage : ContentPage
   {
     InitializeComponent();
     _api = api;
-    Year = 2024;   // keep your default
+    Year = AppConfig.SeasonYear;   // keep your default
     Week = 1;
   }
 

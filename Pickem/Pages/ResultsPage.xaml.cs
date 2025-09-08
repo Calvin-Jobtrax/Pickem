@@ -11,7 +11,7 @@ public partial class ResultsPage : ContentPage
 {
   private readonly ApiService _api;
 
-  public int Year { get; set; } = 2024; // DateTime.Now.Year;
+  public int Year { get; set; } = AppConfig.SeasonYear; // DateTime.Now.Year;
   public int Week { get; set; } = 1;
   public int PlayerId { get; set; } = 1;
 

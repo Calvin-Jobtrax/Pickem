@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Linq;
 using Pickem.Models;
 using Pickem.Services;
 
@@ -54,7 +53,7 @@ public partial class PoolPage : ContentPage
     {
       Busy.IsVisible = Busy.IsRunning = true;
 
-      _year = 2024;
+      _year = AppConfig.SeasonYear;
       WeekLabel.Text = $"{_week}";
 
       var rows = await _api.GetPoolAsync(_year, _week) ?? new List<PoolRow>();
@@ -125,8 +124,8 @@ public partial class PoolPage : ContentPage
   private async void OnReload(object sender, EventArgs e) => await LoadAsync();
 
   private async void OnYearCompleted(object sender, EventArgs e)
-  {
-    _maxWeek = await _api.GetMaxWeekAsync(2024);
+    {
+    _maxWeek = await _api.GetMaxWeekAsync(_year);
     _week = Math.Min(_week, _maxWeek);
     await LoadAsync();
   }

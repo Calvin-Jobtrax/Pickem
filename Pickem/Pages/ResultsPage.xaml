@@ -37,7 +37,7 @@
   <Grid Padding="12,0,12,0" RowSpacing="0" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
 
     <!-- Row 0: WEEK controls -->
-    <Grid Grid.Row="0" ColumnDefinitions="50,40,20,50,*,Auto,Auto" ColumnSpacing="8">
+    <Grid Grid.Row="0" ColumnDefinitions="50,60,20,50,*,Auto,Auto" ColumnSpacing="8">
       <Button Grid.Column="0" Text="◀" Clicked="OnPrevWeek" />
       <Label Grid.Column="1" Text="Week" HorizontalTextAlignment="End" VerticalOptions="Center" />
       <Label Grid.Column="2" x:Name="WeekLabel" Text="1" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalOptions="Center" />
@@ -48,7 +48,7 @@
     </Grid>
 
     <!-- Row 1: PLAYER controls -->
-    <Grid Grid.Row="1" ColumnDefinitions="50,40,20,50,*" ColumnSpacing="8" Margin="0,6,0,0">
+    <Grid Grid.Row="1" ColumnDefinitions="50,60,20,50,*" ColumnSpacing="8" Margin="0,6,0,0">
       <Button Grid.Column="0" Text="◀" Clicked="OnPrevPlayer" />
       <Label Grid.Column="1" Text="Player" HorizontalTextAlignment="End" VerticalOptions="Center" />
       <Label Grid.Column="2" x:Name="PlayerLabel" Text="1" FontAttributes="Bold" VerticalOptions="Center" />
@@ -66,7 +66,7 @@
 
     <!-- Row 4: Purple column header OUTSIDE the CollectionView -->
     <Border Grid.Row="4" Stroke="Transparent" Background="Purple" StrokeShape="RoundRectangle 10" Margin="0,0,0,2">
-      <Grid Style="{StaticResource HeaderRowGrid}" ColumnDefinitions="*,40,60">
+      <Grid Style="{StaticResource HeaderRowGrid}" ColumnDefinitions="*,60,60">
         <Label Grid.Column="0" Text="Matchup" Style="{StaticResource HeaderLabel}" />
         <Label Grid.Column="1" Text="Pick" Style="{StaticResource HeaderLabel}" />
         <Label Grid.Column="2" Text="Points" Style="{StaticResource HeaderLabel}" />
@@ -79,7 +79,7 @@
         <DataTemplate x:DataType="models:PlayerCardRow">
           <Grid RowDefinitions="Auto,1" ColumnDefinitions="2*,0,0">
             <!-- Content row -->
-            <Grid Grid.Row="0" ColumnDefinitions="2*,45,60" Padding="6,2">
+            <Grid Grid.Row="0" ColumnDefinitions="2*,60,60" Padding="6,2">
               <Grid.Triggers>
                 <DataTrigger TargetType="Grid" Binding="{Binding Won}" Value="True">
                   <Setter Property="BackgroundColor" Value="#C8E6C9" />
