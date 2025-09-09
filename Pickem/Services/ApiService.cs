@@ -58,7 +58,7 @@ public sealed class ApiService
     private async Task<T?> TryGetJsonOrNullAsync<T>(string path)
     {
         using var resp = await _http.GetAsync(path);
-        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) 
             return default;
 
         var text = await resp.Content.ReadAsStringAsync();
