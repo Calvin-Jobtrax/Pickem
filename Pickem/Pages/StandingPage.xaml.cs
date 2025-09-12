@@ -6,20 +6,23 @@ namespace Pickem.Pages;
 public partial class StandingPage : ContentPage
 {
   private readonly ApiService _api;
+    public int Year { get; set; }
+    public int Week { get; set; }
 
-  public StandingPage() : this(GetApiFromDi()) { }
+    private const int MaxWeek = 18; // align with PoolPage behavior
+
+    public StandingPage() : this(GetApiFromDi()) { }
 
   public StandingPage(ApiService api)
   {
     InitializeComponent();
     _api = api;
+
     Year = AppConfig.SeasonYear;   // keep your default
-    Week = 1;
+    Week = WeekHelper.GetCurrentWeek();
   }
 
-  public int Year { get; set; }
-  public int Week { get; set; }
-  private const int MaxWeek = 18; // align with PoolPage behavior
+
 
   protected override async void OnAppearing()
   {

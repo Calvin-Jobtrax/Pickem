@@ -1,5 +1,4 @@
-﻿using Pickem.Pages;
-using Pickem.Services;
+﻿using Pickem.Services;
 
 namespace Pickem;
 

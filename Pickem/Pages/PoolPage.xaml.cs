@@ -9,7 +9,7 @@ public partial class PoolPage : ContentPage
 {
   private readonly ApiService _api;
   private int _year = 2024;   // default to 2024 for testing
-  private int _week = 1;
+  private int _week;
   private int _maxWeek = 18;
 
   // Flat items (kept if you still need it elsewhere)
@@ -25,6 +25,8 @@ public partial class PoolPage : ContentPage
 
     // We now bind the grouped source
     PoolList.ItemsSource = _groups;
+ 
+    _week = WeekHelper.GetCurrentWeek();
   }
 
   public PoolPage() : this(ServiceHelper.GetService<ApiService>()) { }
