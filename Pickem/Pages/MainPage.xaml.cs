@@ -1,13 +1,12 @@
-using Pickem.Helpers;
 using Pickem.Services;
 
 namespace Pickem.Pages;
 
 public partial class MainPage : ContentPage
 {
-  // Optional: only needed if you want to use it later
   private readonly ApiService? _api;
 
+  // Bindable header name
   private string _playerName = "Player";
   public string PlayerName
   {
@@ -16,8 +15,9 @@ public partial class MainPage : ContentPage
     {
       if (_playerName == value) return;
       _playerName = value;
+      // keep SessionService in sync
       ServiceHelper.GetService<SessionService>().UserName = _playerName;
-      OnPropertyChanged(); // MAUI's built-in notifier
+      OnPropertyChanged();
     }
   }
 
@@ -26,7 +26,6 @@ public partial class MainPage : ContentPage
   {
     InitializeComponent();
     BindingContext = this;
-    //TitleHelper.AttachUserChip(this);  // <- adds the upper-right username chip
   }
 
   // Also supports DI if you ever call new MainPage(api)
@@ -38,18 +37,40 @@ public partial class MainPage : ContentPage
   protected override void OnAppearing()
   {
     base.OnAppearing();
-    // Show the login name you already save on successful login
-    PlayerName = Preferences.Get("savedUsername", "Player");
+
+    var session = ServiceHelper.GetService<SessionService>();
+
+    // Prefer live session value, fall back to saved prefs
+    PlayerName = !string.IsNullOrWhiteSpace(session.UserName)
+        ? session.UserName
+        : Preferences.Get("currentUserName",
+            Preferences.Get("savedUsername", "Player"));
   }
 
-  private async void OnWagers(object sender, EventArgs e)
-      => await Navigation.PushAsync(new WagerPage());
+  private static int GetPlayerId()
+  {
+    var prefId = Preferences.Get("currentUserId", 0);
+    return prefId;
+  }
 
-  private async void OnPool(object sender, EventArgs e)
-      => await Navigation.PushAsync(new PoolPage());
+  // ---- Navigation handlers ----
+
+  private async void OnWagers(object sender, EventArgs e)
+  {
+    var api = ServiceHelper.GetService<ApiService>();
+    await Navigation.PushAsync(new WagerPage(api, GetPlayerId()));
+  }
+
+  private async void OnSchedule(object sender, EventArgs e)
+  {
+    await Navigation.PushAsync(new PoolPage());
+  }
 
   private async void OnStatus(object sender, EventArgs e)
-      => await Navigation.PushAsync(new ResultsPage());
+  {
+    var api = ServiceHelper.GetService<ApiService>();
+    await Navigation.PushAsync(new ResultsPage(api, GetPlayerId()));
+  }
 
   private async void OnStandings(object sender, EventArgs e)
       => await Navigation.PushAsync(new StandingPage());
@@ -59,7 +80,7 @@ public partial class MainPage : ContentPage
 
   private async void OnExit(object sender, EventArgs e)
   {
-    // Optional: best-effort logout if you have an API endpoint
+    // Optional best-effort logout
     try
     {
       var http = ServiceHelper.GetService<IHttpClientFactory>().CreateClient("Api");
@@ -70,7 +91,7 @@ public partial class MainPage : ContentPage
 #if ANDROID || WINDOWS
     Application.Current?.Quit();
 #else
-    Application.Current!.MainPage = new NavigationPage(new LoginPage());
+        Application.Current!.MainPage = new NavigationPage(new LoginPage());
 #endif
     await Task.CompletedTask;
   }

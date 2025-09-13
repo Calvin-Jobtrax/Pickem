@@ -25,7 +25,7 @@
       <Image Source="applogo.png" Aspect="AspectFit" HorizontalOptions="FillAndExpand" VerticalOptions="Start" Margin="80,0" />
 
       <Button Text="Wagers" Clicked="OnWagers" />
-      <Button Text="Schedule" Clicked="OnPool" />
+      <Button Text="Schedule" Clicked="OnSchedule" />
       <Button Text="Status" Clicked="OnStatus" />
       <Button Text="Standings" Clicked="OnStandings" />
       <Button Text="Record" Clicked="OnRecord" />

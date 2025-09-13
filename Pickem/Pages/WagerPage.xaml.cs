@@ -23,6 +23,7 @@ public partial class WagerPage : ContentPage
     _api = api;
     _playerId = playerId;
     WagerList.ItemsSource = _items;
+    _week = WeekHelper.GetCurrentWeek();
   }
 
   protected override async void OnAppearing()
@@ -99,11 +100,37 @@ public partial class WagerPage : ContentPage
     }
   }
 
+
   private void UpdateButtonsEnabled()
   {
-    var anyDirty = _items.Any(x => x.IsDirty);
-    SaveAllBtn.IsEnabled = anyDirty;
+    var pastCutoff = WeekHelper.IsCurrentWeekPastCutoff(_week);
+
+    // Save is only enabled if NOT past cutoff and there are dirty rows
+    var anyDirty = _items.Any(i => i.IsDirty);
+
+    SaveAllBtn.IsEnabled = !pastCutoff && anyDirty;
+    SaveAllBtn.Text = pastCutoff ? "Locked" : "Save";
+
+    // Cancel remains useful for local changes even if locked
     CancelBtn.IsEnabled = anyDirty;
+
+    // Optional: show a banner explaining the lock
+    if (pastCutoff)
+    {
+      WarnLabel.Text = $"Week {_week} is locked after Thu 4:00 PM Central.";
+      WarnLabel.IsVisible = true;
+      WarnBorder.IsVisible = true;
+    }
+    else
+    {
+      // keep any existing validation text if you have it,
+      // or clear the lock message
+      if (WarnLabel.Text?.StartsWith("Week") == true && WarnLabel.Text.Contains("locked"))
+      {
+        WarnLabel.IsVisible = false;
+        WarnBorder.IsVisible = false;
+      }
+    }
   }
 
   private void Row_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -222,53 +249,51 @@ public partial class WagerPage : ContentPage
     await DisplayAlert("Canceled", "Changes have been reverted.", "OK");
   }
 
-    private async void OnSaveAll(object sender, EventArgs e)
+  private async void OnSaveAll(object sender, EventArgs e)
+  {
+    // HARD STOP if locked
+    if (WeekHelper.IsCurrentWeekPastCutoff(_week))
     {
-        ValidateAndShowBanner();
-
-        Busy.IsVisible = Busy.IsRunning = true;
-
-        try
-        {
-            foreach (var r in _items)
-            {
-                try
-                {
-                    // fire update and ignore errors
-                    await _api.UpdateGameAsync(r.Record, r.Wager, r.VisitorWin, r.HomeWin);
-                }
-                catch
-                {
-                    // swallow any exception, keep going
-                }
-
-                r.MarkClean();
-            }
-
-            UpdateButtonsEnabled();
-
-            ValidateAndShowBanner();
-
-            // optional: force collection view/grid refresh
-            WagerList.ItemsSource = null;
-            WagerList.ItemsSource = _items;
-
-            if (WarnLabel.IsVisible)
-                await DisplayAlert("Saved (with warnings)", "Saved, but review the notes above.", "OK");
-            else
-                await DisplayAlert("Saved", "All wagers saved.", "OK");
-
-
-        }
-        finally
-        {
-            Busy.IsVisible = Busy.IsRunning = false;
-        }
+      await DisplayAlert("Locked", $"Week {_week} is locked after Thu 4:00 PM Central. Saves are disabled.", "OK");
+      UpdateButtonsEnabled();
+      return;
     }
 
+    ValidateAndShowBanner();
+    Busy.IsVisible = Busy.IsRunning = true;
 
-    // NEW: Button handlers (mirroring PoolPage)
-    private async void OnPrevWeek(object sender, EventArgs e)
+    try
+    {
+      foreach (var r in _items)
+      {
+        try
+        {
+          await _api.UpdateGameAsync(r.Record, r.Wager, r.VisitorWin, r.HomeWin);
+        }
+        catch { /* ignore per your original */ }
+
+        r.MarkClean();
+      }
+
+      UpdateButtonsEnabled();     // <- refresh buttons post-save
+      ValidateAndShowBanner();
+
+      WagerList.ItemsSource = null;
+      WagerList.ItemsSource = _items;
+
+      if (WarnLabel.IsVisible)
+        await DisplayAlert("Saved (with warnings)", "Saved, but review the notes above.", "OK");
+      else
+        await DisplayAlert("Saved", "All wagers saved.", "OK");
+    }
+    finally
+    {
+      Busy.IsVisible = Busy.IsRunning = false;
+    }
+  }
+
+  // NEW: Button handlers (mirroring PoolPage)
+  private async void OnPrevWeek(object sender, EventArgs e)
   {
     if (_week > 1)
     {
@@ -276,6 +301,7 @@ public partial class WagerPage : ContentPage
       WeekLabel.Text = _week.ToString();
       await LoadAsync();
     }
+    UpdateButtonsEnabled();
   }
 
   private async void OnNextWeek(object sender, EventArgs e)
@@ -286,6 +312,7 @@ public partial class WagerPage : ContentPage
       WeekLabel.Text = _week.ToString();
       await LoadAsync();
     }
+    UpdateButtonsEnabled();
   }
 
   // Checkbox mutual exclusivity (unchanged)

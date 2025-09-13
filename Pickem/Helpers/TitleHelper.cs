@@ -74,6 +74,8 @@ public static class TitleHelper
     frame.Content = nameLabel;
     grid.Add(frame, 1, 0);
 
-    NavigationPage.SetTitleView(page, grid);
+    // Support both Shell and NavigationPage
+    Shell.SetTitleView(page, grid);            // ✅ correct for Shell
+    NavigationPage.SetTitleView(page, grid);   // ✅ works if hosted in a NavigationPage
   }
 }

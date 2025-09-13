@@ -4,27 +4,24 @@ using Pickem.Services;
 
 namespace Pickem.Pages;
 
-[QueryProperty(nameof(Year), "year")]
-[QueryProperty(nameof(Week), "week")]
-[QueryProperty(nameof(PlayerId), "playerId")]
 public partial class ResultsPage : ContentPage
 {
   private readonly ApiService _api;
-
-  public int Year { get; set; } = AppConfig.SeasonYear; // DateTime.Now.Year;
-  public int Week { get; set; } = 1;
-  public int PlayerId { get; set; } = 1;
-
+  private int _year = AppConfig.SeasonYear;
+  private int _week;
+  private int _playerId;
   private int _maxWeek = 18;
 
   private readonly ObservableCollection<PlayerCardRow> _rows = new();
 
   public ResultsPage() : this(ServiceHelper.GetService<ApiService>()) { }
 
-  public ResultsPage(ApiService api)
+  public ResultsPage(ApiService api, int playerId = 1)
   {
     InitializeComponent();
     _api = api;
+    _playerId = playerId;
+    _week = WeekHelper.GetCurrentWeek();
     RowsListCtl.ItemsSource = _rows; // bind once
   }
 
@@ -43,7 +40,7 @@ public partial class ResultsPage : ContentPage
     try
     {
       BusyCtl.IsVisible = BusyCtl.IsRunning = true;
-      _maxWeek = await _api.GetMaxWeekAsync(Year);
+      _maxWeek = await _api.GetMaxWeekAsync(_year);
       if (_maxWeek < 1) _maxWeek = 18;
     }
     catch
@@ -61,10 +58,10 @@ public partial class ResultsPage : ContentPage
 
   private void ClampAndRenderHeaderValues()
   {
-    Week = Math.Clamp(Week, 1, _maxWeek);
-    if (PlayerId < 1) PlayerId = 1;
-    WeekLabelCtl.Text = Week.ToString();
-    PlayerLabelCtl.Text = PlayerId.ToString();
+    _week = Math.Clamp(_week, 1, _maxWeek);
+    if (_playerId < 1) _playerId = 1;
+    WeekLabelCtl.Text = _week.ToString();
+    PlayerLabelCtl.Text = _playerId.ToString();
   }
 
   private async Task LoadAsync()
@@ -73,9 +70,9 @@ public partial class ResultsPage : ContentPage
     {
       BusyCtl.IsVisible = BusyCtl.IsRunning = true;
 
-      var dto = await _api.GetPlayerCardAsync(Year, Week, PlayerId);
+      var dto = await _api.GetPlayerCardAsync(_year, _week, _playerId);
 
-      HeaderLabelCtl.Text = dto?.Header ?? $"Player {PlayerId} — Week {Week}";
+      HeaderLabelCtl.Text = dto?.Header ?? $"Player {_playerId} — Week {_week}";
 
       _rows.Clear();
       if (dto?.Rows != null)
@@ -109,20 +106,20 @@ public partial class ResultsPage : ContentPage
   // --- Button handlers (Week) ---
   private async void OnPrevWeek(object? sender, EventArgs e)
   {
-    if (Week > 1)
+    if (_week > 1)
     {
-      Week--;
-      WeekLabelCtl.Text = Week.ToString();
+      _week--;
+      WeekLabelCtl.Text = _week.ToString();
       await LoadAsync();
     }
   }
 
   private async void OnNextWeek(object? sender, EventArgs e)
   {
-    if (Week < _maxWeek)
+    if (_week < _maxWeek)
     {
-      Week++;
-      WeekLabelCtl.Text = Week.ToString();
+      _week++;
+      WeekLabelCtl.Text = _week.ToString();
       await LoadAsync();
     }
   }
@@ -130,18 +127,18 @@ public partial class ResultsPage : ContentPage
   // --- Button handlers (Player) ---
   private async void OnPrevPlayer(object? sender, EventArgs e)
   {
-    if (PlayerId > 1)
+    if (_playerId > 1)
     {
-      PlayerId--;
-      PlayerLabelCtl.Text = PlayerId.ToString();
+      _playerId--;
+      PlayerLabelCtl.Text = _playerId.ToString();
       await LoadAsync();
     }
   }
 
   private async void OnNextPlayer(object? sender, EventArgs e)
   {
-    PlayerId++;
-    PlayerLabelCtl.Text = PlayerId.ToString();
+    _playerId++;
+    PlayerLabelCtl.Text = _playerId.ToString();
     await LoadAsync();
   }
 
