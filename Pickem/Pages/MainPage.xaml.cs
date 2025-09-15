@@ -58,22 +58,22 @@ public partial class MainPage : ContentPage
   private async void OnWagers(object sender, EventArgs e)
   {
     var api = ServiceHelper.GetService<ApiService>();
-    await Navigation.PushAsync(new WagerPage(api, GetPlayerId()));
+    await Navigation.PushAsync(new WagersPage(api, GetPlayerId()));
   }
 
   private async void OnSchedule(object sender, EventArgs e)
   {
-    await Navigation.PushAsync(new PoolPage());
+    await Navigation.PushAsync(new SchedulePage());
   }
 
   private async void OnStatus(object sender, EventArgs e)
   {
     var api = ServiceHelper.GetService<ApiService>();
-    await Navigation.PushAsync(new ResultsPage(api, GetPlayerId()));
+    await Navigation.PushAsync(new StatusPage(api, GetPlayerId()));
   }
 
   private async void OnStandings(object sender, EventArgs e)
-      => await Navigation.PushAsync(new StandingPage());
+      => await Navigation.PushAsync(new StandingsPage());
 
   private async void OnRecord(object sender, EventArgs e)
       => await Navigation.PushAsync(new RecordPage());

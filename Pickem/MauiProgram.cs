@@ -67,11 +67,11 @@ public static class MauiProgram
 
         builder.Services.AddTransient<Pages.LoginPage>();
         builder.Services.AddTransient<Pages.MainPage>();
-        builder.Services.AddTransient<Pages.PoolPage>();
+        builder.Services.AddTransient<Pages.SchedulePage>();
         builder.Services.AddTransient<Pages.RecordPage>();
-        builder.Services.AddTransient<Pages.ResultsPage>();
-        builder.Services.AddTransient<Pages.StandingPage>();
-        builder.Services.AddTransient<Pages.WagerPage>();
+        builder.Services.AddTransient<Pages.StatusPage>();
+        builder.Services.AddTransient<Pages.StandingsPage>();
+        builder.Services.AddTransient<Pages.WagersPage>();
 
         var app = builder.Build();
 

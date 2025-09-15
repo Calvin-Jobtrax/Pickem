@@ -3,7 +3,7 @@ using Pickem.Services;
 
 namespace Pickem.Pages;
 
-public partial class StandingPage : ContentPage
+public partial class StandingsPage : ContentPage
 {
   private readonly ApiService _api;
     public int Year { get; set; }
@@ -11,9 +11,9 @@ public partial class StandingPage : ContentPage
 
     private const int MaxWeek = 18; // align with PoolPage behavior
 
-    public StandingPage() : this(GetApiFromDi()) { }
+    public StandingsPage() : this(GetApiFromDi()) { }
 
-  public StandingPage(ApiService api)
+  public StandingsPage(ApiService api)
   {
     InitializeComponent();
     _api = api;

@@ -1,5 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="Pickem.Pages.StandingPage" xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:models="clr-namespace:Pickem.Models" xmlns:behaviors="clr-namespace:Pickem.Behaviors" Title="Standings">
+<ContentPage x:Class="Pickem.Pages.StandingsPage" 
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             xmlns:models="clr-namespace:Pickem.Models" 
+             xmlns:behaviors="clr-namespace:Pickem.Behaviors" 
+             Title="Standings">
 
   <ContentPage.Behaviors>
     <behaviors:UserChipBehavior />

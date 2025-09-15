@@ -247,14 +247,14 @@ public sealed class LoginViewModel : INotifyPropertyChanged
 
   private void ExitApp()
   {
-    // iOS discourages programmatic exit; this matches your Swift behavior for internal apps.
 #if ANDROID
     Android.OS.Process.KillProcess(Android.OS.Process.MyPid());
-#elif IOS
-        // Not recommended for App Store apps, but mirrors exit(0) in Swift sample
-        System.Diagnostics.Process.GetCurrentProcess().Kill();
+#elif WINDOWS
+    Application.Current?.Quit();  // WinUI clean shutdown
 #else
-        Environment.Exit(0);
+    // iOS / MacCatalyst: Apple forbids programmatic exit.
+    // Best practice: maybe display a message instead, or just do nothing.
 #endif
   }
+
 }

@@ -30,6 +30,10 @@
     <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1701;IL2026;ILTrim0001;NETSDK1139</NoWarn>
+  </PropertyGroup>
+
   <!-- Debug defaults -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <PublishTrimmed>true</PublishTrimmed>
@@ -86,6 +90,23 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Pages\StandingsPage.xaml.cs">
+      <DependentUpon>StandingsPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Pages\StatusPage.xaml.cs">
+      <DependentUpon>StatusPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Pages\SchedulePage.xaml.cs">
+      <DependentUpon>SchedulePage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Pages\RecordPage.xaml.cs">
+      <DependentUpon>RecordPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Pages\WagersPage.xaml.cs">
+      <DependentUpon>WagersPage.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

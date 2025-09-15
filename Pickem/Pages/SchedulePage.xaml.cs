@@ -5,7 +5,7 @@ using Pickem.Services;
 
 namespace Pickem.Pages;
 
-public partial class PoolPage : ContentPage
+public partial class SchedulePage : ContentPage
 {
   private readonly ApiService _api;
   private int _year = 2024;   // default to 2024 for testing
@@ -18,7 +18,7 @@ public partial class PoolPage : ContentPage
   // NEW: groups for CollectionView
   private readonly ObservableCollection<PoolGroup> _groups = new();
 
-  public PoolPage(ApiService api)
+  public SchedulePage(ApiService api)
   {
     InitializeComponent();
     _api = api;
@@ -29,7 +29,7 @@ public partial class PoolPage : ContentPage
     _week = WeekHelper.GetCurrentWeek();
   }
 
-  public PoolPage() : this(ServiceHelper.GetService<ApiService>()) { }
+  public SchedulePage() : this(ServiceHelper.GetService<ApiService>()) { }
 
   protected override async void OnAppearing()
   {

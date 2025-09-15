@@ -4,7 +4,7 @@ using Pickem.Services;
 
 namespace Pickem.Pages;
 
-public partial class ResultsPage : ContentPage
+public partial class StatusPage : ContentPage
 {
   private readonly ApiService _api;
   private int _year = AppConfig.SeasonYear;
@@ -14,9 +14,9 @@ public partial class ResultsPage : ContentPage
 
   private readonly ObservableCollection<PlayerCardRow> _rows = new();
 
-  public ResultsPage() : this(ServiceHelper.GetService<ApiService>()) { }
+  public StatusPage() : this(ServiceHelper.GetService<ApiService>()) { }
 
-  public ResultsPage(ApiService api, int playerId = 1)
+  public StatusPage(ApiService api, int playerId = 1)
   {
     InitializeComponent();
     _api = api;

@@ -5,20 +5,20 @@
        xmlns:pages="clr-namespace:Pickem.Pages" 
        Shell.FlyoutBehavior="Flyout">
 
-  <FlyoutItem Title="Wagers" Route="wager">
-    <ShellContent Title="Wager" ContentTemplate="{DataTemplate pages:WagerPage}" />
+  <FlyoutItem Title="Wagers" Route="wagers">
+    <ShellContent Title="Wagers" ContentTemplate="{DataTemplate pages:WagersPage}" />
   </FlyoutItem>
   
-  <FlyoutItem Title="Schedule" Route="pool">
-    <ShellContent Title="Pool" ContentTemplate="{DataTemplate pages:PoolPage}" />
+  <FlyoutItem Title="Schedule" Route="schedule">
+    <ShellContent Title="Pool" ContentTemplate="{DataTemplate pages:SchedulePage}" />
   </FlyoutItem>
 
-  <FlyoutItem Title="Status" Route="results">
-    <ShellContent Title="Results" ContentTemplate="{DataTemplate pages:ResultsPage}" />
+  <FlyoutItem Title="Status" Route="status">
+    <ShellContent Title="Status" ContentTemplate="{DataTemplate pages:StatusPage}" />
   </FlyoutItem>
 
-  <FlyoutItem Title="Standings" Route="standing">
-    <ShellContent Title="Standings" ContentTemplate="{DataTemplate pages:StandingPage}" />
+  <FlyoutItem Title="Standings" Route="standings">
+    <ShellContent Title="Standings" ContentTemplate="{DataTemplate pages:StandingsPage}" />
   </FlyoutItem>
 
   <FlyoutItem Title="Record" Route="record">

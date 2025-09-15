@@ -1,11 +1,10 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Pickem.Models;
 using Pickem.Services;
 
 namespace Pickem.Pages;
 
-public partial class WagerPage : ContentPage
+public partial class WagersPage : ContentPage
 {
   private readonly ApiService _api;
   private readonly int _playerId; // TODO: set from login/session
@@ -16,8 +15,8 @@ public partial class WagerPage : ContentPage
   private readonly ObservableCollection<WagerItem> _items = new();
   private int _maxGamesThisWeek = 0; // excludes Tie Break
 
-  public WagerPage() : this(ServiceHelper.GetService<ApiService>(), 1) { }
-  public WagerPage(ApiService api, int playerId = 1)
+  public WagersPage() : this(ServiceHelper.GetService<ApiService>(), 1) { }
+  public WagersPage(ApiService api, int playerId = 1)
   {
     InitializeComponent();
     _api = api;
