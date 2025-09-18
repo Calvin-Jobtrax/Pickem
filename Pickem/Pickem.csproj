@@ -81,7 +81,7 @@
     <MauiIcon Include="Resources\Images\applogo.png" Alias="appicon" />
 
     <!-- Splash -->
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+    <MauiSplashScreen Include="Resources\Images\applogo.png" Color="#FFFFFF" BaseSize="128,128" />
 
     <!-- Images: include everything, then exclude applogo.png so it's not processed twice -->
     <MauiImage Include="Resources\Images\**\*.*" />
