@@ -14,7 +14,7 @@
   <Grid RowDefinitions="300,*" Padding="0">
 
     <!-- LOGO (fills width, tight to the top) -->
-    <Image Grid.Row="0" Source="applogo.png" Aspect="AspectFit" VerticalOptions="Start" Margin="0,0,0,20"/>
+    <Image Grid.Row="0" Source="applogo_ui.png" Aspect="AspectFit" VerticalOptions="Start" Margin="0,0,0,20"/>
 
     <!-- FORM CONTENT -->
     <ScrollView Grid.Row="1">

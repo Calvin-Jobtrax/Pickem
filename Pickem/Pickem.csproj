@@ -76,13 +76,25 @@
     <CodesignProvision>VS: WildCard Development</CodesignProvision>
   </PropertyGroup>
 
-  <!-- Assets -->
   <ItemGroup>
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+    <!-- Launcher icon: force name appicon -->
+    <MauiIcon Include="Resources\Images\applogo.png" Alias="appicon" />
+
+    <!-- Splash -->
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+
+    <!-- Images: include everything, then exclude applogo.png so it's not processed twice -->
     <MauiImage Include="Resources\Images\**\*.*" />
+    <MauiImage Remove="Resources\Images\applogo - Copy.png" />
+    <MauiImage Remove="Resources\Images\applogo.png" />
+
     <MauiFont Include="Resources\Fonts\**\*.*" />
     <MauiAsset Include="Resources\Raw\**\*.*" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Images\applogo - Copy.png" />
+    <None Remove="Resources\Images\applogo_ui.png" />
   </ItemGroup>
 
   <!-- Non-MAUI packages only -->

@@ -22,7 +22,7 @@
         </Label.FormattedText>
       </Label>
 
-      <Image Source="applogo.png" Aspect="AspectFit" HorizontalOptions="FillAndExpand" VerticalOptions="Start" Margin="80,0" />
+      <Image Source="applogo_ui.png" Aspect="AspectFit" HorizontalOptions="FillAndExpand" VerticalOptions="Start" Margin="80,0" />
 
       <Button Text="Wagers" Clicked="OnWagers" />
       <Button Text="Schedule" Clicked="OnSchedule" />

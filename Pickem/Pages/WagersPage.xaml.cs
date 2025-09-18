@@ -54,53 +54,86 @@ public partial class WagersPage : ContentPage
     }
   }
 
-  private async Task LoadAsync()
-  {
-    try
+    private async Task LoadAsync()
     {
-      Busy.IsVisible = Busy.IsRunning = true;
-
-      var rows = await _api.GetWagersAsync(_year, _week, _playerId) ?? new List<WagerRow>();
-
-      // Detach old handlers
-      foreach (var old in _items)
-        old.PropertyChanged -= Row_PropertyChanged;
-
-      _items.Clear();
-
-      var i = 0;
-      foreach (var r in rows)
-      {
-        var item = new WagerItem
+        try
         {
-          RowIndex = i++,
-          Record = r.Record,
-          Year = r.Year,
-          Week = r.Week,
-          Game = r.Game,
-          Wager = r.Wager,
-          Visitor = r.Visitor,
-          Home = r.Home,
-          VisitorWin = r.VisitorWin,
-          HomeWin = r.HomeWin
-        };
+            Busy.IsVisible = Busy.IsRunning = true;
 
-        item.MarkClean();
-        item.PropertyChanged += Row_PropertyChanged;
-        _items.Add(item);
-      }
+            // 1) Pull wagers (user picks)
+            var wagerRows = await _api.GetWagersAsync(_year, _week, _playerId) ?? new List<WagerRow>();
 
-      ValidateAndShowBanner();
-      UpdateButtonsEnabled();
+            // 2) Pull pool (has real scores/results)
+            var poolRows = await _api.GetPoolAsync(_year, _week) ?? new List<PoolRow>();
+
+            // (Optional but harmless) ensure TB row in pool has scores — mirrors your SchedulePage
+            PrepareTieBreak(poolRows);
+
+            // 3) Build score index from pool (by GameNumber, Record, and team names)
+            var (scoreByGame, scoreByRecord, scoreByTeams) = BuildScoreIndex(poolRows);
+
+            // Detach old handlers
+            foreach (var old in _items)
+                old.PropertyChanged -= Row_PropertyChanged;
+
+            _items.Clear();
+
+            // 4) Map wagers -> WagerItem and copy actual scores so IsFinal/UserPickCorrect work
+            var i = 0;
+            foreach (var r in wagerRows)
+            {
+                // Try matches: by Game, then by Record, then by team names
+                (int? v, int? h) scores = (null, null);
+                if (r.Game > 0 && scoreByGame.TryGetValue(r.Game, out var gScores))
+                    scores = gScores;
+                else if (r.Record > 0 && scoreByRecord.TryGetValue(r.Record, out var recScores))
+                    scores = recScores;
+                else if (!string.IsNullOrWhiteSpace(r.Visitor) && !string.IsNullOrWhiteSpace(r.Home))
+                {
+                    var key = (r.Visitor.Trim(), r.Home.Trim());
+                    if (scoreByTeams.TryGetValue(key, out var teamScores))
+                        scores = teamScores;
+                }
+
+                var item = new WagerItem
+                {
+                    RowIndex = i++,
+
+                    // base WagerRow fields (you already have these)
+                    Record = r.Record,
+                    Year = r.Year,
+                    Week = r.Week,
+                    Game = r.Game,
+                    Wager = r.Wager,
+                    Visitor = r.Visitor,
+                    Home = r.Home,
+                    VisitorWin = r.VisitorWin,
+                    HomeWin = r.HomeWin,
+
+                    // IMPORTANT: copy real scores
+                    ActualVisitorScore = scores.v,
+                    ActualHomeScore = scores.h
+                };
+
+                item.MarkClean();
+                item.PropertyChanged += Row_PropertyChanged;
+                _items.Add(item);
+            }
+
+            ValidateAndShowBanner();
+            UpdateButtonsEnabled();
+
+            // (Optional) rebind to force re-eval of RowBackground converter if your UI is stubborn
+            // WagerList.ItemsSource = null; WagerList.ItemsSource = _items;
+        }
+        finally
+        {
+            Busy.IsVisible = Busy.IsRunning = false;
+        }
     }
-    finally
-    {
-      Busy.IsVisible = Busy.IsRunning = false;
-    }
-  }
 
 
-  private void UpdateButtonsEnabled()
+    private void UpdateButtonsEnabled()
   {
     var pastCutoff = WeekHelper.IsCurrentWeekPastCutoff(_week);
 
@@ -338,4 +371,64 @@ public partial class WagersPage : ContentPage
       if (item.VisitorWin == true) item.VisitorWin = false;
     }
   }
+
+    private static (Dictionary<int, (int? v, int? h)> byGame,
+                   Dictionary<int, (int? v, int? h)> byRecord,
+                   Dictionary<(string v, string h), (int? v, int? h)> byTeams)
+      BuildScoreIndex(IEnumerable<PoolRow> poolRows)
+    {
+        var byGame = new Dictionary<int, (int? v, int? h)>();
+        var byRecord = new Dictionary<int, (int? v, int? h)>();
+        var byTeams = new Dictionary<(string v, string h), (int? v, int? h)>();
+
+        foreach (var pr in poolRows)
+        {
+            // ignore rows without teams
+            var vName = pr.Visitor?.Trim();
+            var hName = pr.Home?.Trim();
+            var tup = (pr.VisitorScore, pr.HomeScore);
+
+            if (pr.GameNumber > 0)
+                byGame[pr.GameNumber] = tup;
+
+            if (pr.Record > 0)
+                byRecord[pr.Record] = tup;
+
+            if (!string.IsNullOrEmpty(vName) && !string.IsNullOrEmpty(hName))
+                byTeams[(vName, hName)] = tup;
+        }
+
+        return (byGame, byRecord, byTeams);
+    }
+
+    // Add this to WagersPage.cs
+    private static void PrepareTieBreak(IList<PoolRow> items)
+    {
+        if (items == null || items.Count == 0) return;
+
+        var tie = items.FirstOrDefault(r =>
+          string.Equals(r.Visitor, "Tie Break", StringComparison.OrdinalIgnoreCase));
+        if (tie == null) return;
+
+        var last = items
+          .Where(r => !string.Equals(r.Visitor, "Tie Break", StringComparison.OrdinalIgnoreCase))
+          .OrderByDescending(r => r.GameNumber)
+          .FirstOrDefault();
+
+        if (last?.VisitorScore.HasValue == true && last.HomeScore.HasValue == true)
+        {
+            tie.VisitorScore = last.VisitorScore;
+            tie.HomeScore = last.HomeScore;
+
+            // copy date/time so TB groups/aligns with the last game
+            if (!string.IsNullOrWhiteSpace(last.Date)) tie.Date = last.Date;
+            if (!string.IsNullOrWhiteSpace(last.Time)) tie.Time = last.Time;
+        }
+        else
+        {
+            // if we don't have scores yet, drop the TB row so it doesn't interfere
+            items.Remove(tie);
+        }
+    }
+
 }
