@@ -55,10 +55,10 @@
 
     <!-- Row 1: PLAYER controls -->
     <Grid Grid.Row="1" ColumnDefinitions="50,60,25,50,*" ColumnSpacing="8" Margin="0,6,0,0">
-      <Button Grid.Column="0" Text="◀" Clicked="OnPrevPlayer" />
+      <Button x:Name="PrevPlayerBtn" Grid.Column="0" Text="◀" Clicked="OnPrevPlayer" />
       <Label Grid.Column="1" Text="Player" HorizontalTextAlignment="End" VerticalOptions="Center" />
       <Label Grid.Column="2" x:Name="PlayerLabel" Text="1" FontAttributes="Bold" VerticalOptions="Center" />
-      <Button Grid.Column="3" Text="▶" Clicked="OnNextPlayer" />
+      <Button x:Name="NextPlayerBtn" Grid.Column="3" Text="▶" Clicked="OnNextPlayer" />
     </Grid>
 
     <!-- Row 2: Big dynamic header -->

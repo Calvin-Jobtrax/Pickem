@@ -32,39 +32,56 @@ public partial class StatusPage : ContentPage
   private CollectionView RowsListCtl => this.FindByName<CollectionView>("RowsList")!;
   private ActivityIndicator BusyCtl => this.FindByName<ActivityIndicator>("Busy")!;
 
-  protected override async void OnAppearing()
-  {
-    base.OnAppearing();
+    private bool CanBrowsePlayers()
+    {
+        var currentWeek = WeekHelper.GetCurrentWeek();
 
-    // Pull MaxWeek from API (matches other pages)
-    try
-    {
-      BusyCtl.IsVisible = BusyCtl.IsRunning = true;
-      _maxWeek = await _api.GetMaxWeekAsync(_year);
-      if (_maxWeek < 1) _maxWeek = 18;
-    }
-    catch
-    {
-      _maxWeek = 18;
-    }
-    finally
-    {
-      BusyCtl.IsVisible = BusyCtl.IsRunning = false;
+        if (_week > currentWeek) return false;             // never allow future weeks
+        if (_week < currentWeek) return true;              // always OK for past weeks
+
+        // current week → only OK after cutoff
+        return WeekHelper.IsCurrentWeekPastCutoff(_week);
     }
 
-    ClampAndRenderHeaderValues();
-    await LoadAsync();
-  }
 
-  private void ClampAndRenderHeaderValues()
-  {
-    _week = Math.Clamp(_week, 1, _maxWeek);
-    if (_playerId < 1) _playerId = 1;
-    WeekLabelCtl.Text = _week.ToString();
-    PlayerLabelCtl.Text = _playerId.ToString();
-  }
+    //private Button PrevPlayerBtn => this.FindByName<Button>("PrevPlayerBtn")!;
+    //private Button NextPlayerBtn => this.FindByName<Button>("NextPlayerBtn")!;
 
-  private async Task LoadAsync()
+    private void UpdatePlayerButtonsEnabled()
+    {
+        bool canBrowse = CanBrowsePlayers();
+        if (PrevPlayerBtn != null) PrevPlayerBtn.IsEnabled = canBrowse && _playerId > 1;
+        if (NextPlayerBtn != null) NextPlayerBtn.IsEnabled = canBrowse;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        try
+        {
+            BusyCtl.IsVisible = BusyCtl.IsRunning = true;
+            _maxWeek = await _api.GetMaxWeekAsync(_year);
+            if (_maxWeek < 1) _maxWeek = 18;
+        }
+        catch { _maxWeek = 18; }
+        finally { BusyCtl.IsVisible = BusyCtl.IsRunning = false; }
+
+        ClampAndRenderHeaderValues();
+        UpdatePlayerButtonsEnabled();          // <— add this
+        await LoadAsync();
+    }
+
+    private void ClampAndRenderHeaderValues()
+    {
+        var currentWeek = WeekHelper.GetCurrentWeek();
+        _week = Math.Clamp(_week, 1, Math.Min(_maxWeek, currentWeek));
+        if (_playerId < 1) _playerId = 1;
+
+        WeekLabelCtl.Text = _week.ToString();
+        PlayerLabelCtl.Text = _playerId.ToString();
+    }
+
+    private async Task LoadAsync()
   {
     try
     {
@@ -103,44 +120,70 @@ public partial class StatusPage : ContentPage
     }
   }
 
-  // --- Button handlers (Week) ---
-  private async void OnPrevWeek(object? sender, EventArgs e)
-  {
-    if (_week > 1)
+    private async void OnPrevWeek(object? sender, EventArgs e)
     {
-      _week--;
-      WeekLabelCtl.Text = _week.ToString();
-      await LoadAsync();
+        if (_week > 1)
+        {
+            _week--;
+            WeekLabelCtl.Text = _week.ToString();
+            UpdatePlayerButtonsEnabled();      // re-check lock rule on week change
+            await LoadAsync();
+        }
     }
-  }
 
-  private async void OnNextWeek(object? sender, EventArgs e)
-  {
-    if (_week < _maxWeek)
+    private async void OnNextWeek(object? sender, EventArgs e)
     {
-      _week++;
-      WeekLabelCtl.Text = _week.ToString();
-      await LoadAsync();
+        var currentWeek = WeekHelper.GetCurrentWeek();
+        if (_week < Math.Min(_maxWeek, currentWeek))
+        {
+            _week++;
+            WeekLabelCtl.Text = _week.ToString();
+            UpdatePlayerButtonsEnabled();
+            await LoadAsync();
+        }
+        else
+        {
+            await DisplayAlert("Locked",
+              "Future weeks are not available yet.",
+              "OK");
+        }
     }
-  }
 
-  // --- Button handlers (Player) ---
-  private async void OnPrevPlayer(object? sender, EventArgs e)
-  {
-    if (_playerId > 1)
+    private async void OnPrevPlayer(object? sender, EventArgs e)
     {
-      _playerId--;
-      PlayerLabelCtl.Text = _playerId.ToString();
-      await LoadAsync();
+        if (!CanBrowsePlayers())
+        {
+            await DisplayAlert("Locked",
+              $"Player view is locked for Week {_week} until Thu 4:00 PM Central.",
+              "OK");
+            return;
+        }
+
+        if (_playerId > 1)
+        {
+            _playerId--;
+            PlayerLabelCtl.Text = _playerId.ToString();
+            UpdatePlayerButtonsEnabled();        // keep buttons in sync
+            await LoadAsync();
+        }
     }
-  }
 
-  private async void OnNextPlayer(object? sender, EventArgs e)
-  {
-    _playerId++;
-    PlayerLabelCtl.Text = _playerId.ToString();
-    await LoadAsync();
-  }
+    private async void OnNextPlayer(object? sender, EventArgs e)
+    {
+        if (!CanBrowsePlayers())
+        {
+            await DisplayAlert("Locked",
+              $"Player view is locked for Week {_week} until Thu 4:00 PM Central.",
+              "OK");
+            return;
+        }
 
-  private async void OnReload(object? sender, EventArgs e) => await LoadAsync();
+        _playerId++;
+        PlayerLabelCtl.Text = _playerId.ToString();
+        UpdatePlayerButtonsEnabled();
+        await LoadAsync();
+    }
+
+
+    private async void OnReload(object? sender, EventArgs e) => await LoadAsync();
 }
